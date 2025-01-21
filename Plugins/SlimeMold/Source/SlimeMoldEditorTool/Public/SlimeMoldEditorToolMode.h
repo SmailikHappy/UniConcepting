@@ -22,8 +22,6 @@ class USlimeMoldEditorToolEditorMode : public UEdMode
 public:
 	const static FEditorModeID EM_SlimeMoldEditorToolEditorModeId;
 
-	static FString LineToolName;
-	static FString SimpleToolName;
 	static FString InteractiveToolName;
 	static FString ExampleToolName;
 	static FString WorldManagingToolName;

@@ -26,8 +26,6 @@
 
 const FEditorModeID USlimeMoldEditorToolEditorMode::EM_SlimeMoldEditorToolEditorModeId = TEXT("EM_SlimeMoldEditorToolEditorMode");
 
-FString USlimeMoldEditorToolEditorMode::LineToolName = TEXT("SlimeMoldEditorTool_LineTool");
-FString USlimeMoldEditorToolEditorMode::SimpleToolName = TEXT("SlimeMoldEditorTool_ActorInfoTool");
 FString USlimeMoldEditorToolEditorMode::InteractiveToolName = TEXT("SlimeMoldEditorTool_MeasureDistanceTool");
 FString USlimeMoldEditorToolEditorMode::ExampleToolName = TEXT("SlimeMoldEditorTool_ExampleTool");
 FString USlimeMoldEditorToolEditorMode::WorldManagingToolName = TEXT("SlimeMoldEditorTool_WorldManagingTool");
@@ -67,15 +65,13 @@ void USlimeMoldEditorToolEditorMode::Enter()
 	////////////////////////////////////////////////////////////////////////// 
 	const FSlimeMoldEditorToolModeCommands& SampleToolCommands = FSlimeMoldEditorToolModeCommands::Get();
 
-	RegisterTool(SampleToolCommands.LineTool, LineToolName, NewObject<USlimeMoldEditorToolLineToolBuilder>(this));
-	RegisterTool(SampleToolCommands.SimpleTool, SimpleToolName, NewObject<USlimeMoldEditorToolSimpleToolBuilder>(this));
 	RegisterTool(SampleToolCommands.InteractiveTool, InteractiveToolName, NewObject<USlimeMoldEditorToolInteractiveToolBuilder>(this));
 	RegisterTool(SampleToolCommands.ExampleTool, ExampleToolName, NewObject<USlimeMoldEditorToolExampleBuilder>(this));
 	RegisterTool(SampleToolCommands.WorldManagingTool, WorldManagingToolName, NewObject<USlimeMoldEditorToolWorldManagingBuilder>(this));
 	RegisterTool(SampleToolCommands.SourceManagingTool, SourceManagingToolName, NewObject<USlimeMoldEditorToolSourceManagingBuilder>(this));
 
 	// active tool type is not relevant here, we just set to default
-	GetToolManager()->SelectActiveToolType(EToolSide::Left, SimpleToolName);
+	GetToolManager()->SelectActiveToolType(EToolSide::Left, ExampleToolName);
 }
 
 void USlimeMoldEditorToolEditorMode::CreateToolkit()

@@ -17,8 +17,6 @@ public:
 	static TMap<FName, TArray<TSharedPtr<FUICommandInfo>>> GetCommands();
 
 
-	TSharedPtr<FUICommandInfo> LineTool;
-	TSharedPtr<FUICommandInfo> SimpleTool;
 	TSharedPtr<FUICommandInfo> InteractiveTool;
 	TSharedPtr<FUICommandInfo> ExampleTool;
 	TSharedPtr<FUICommandInfo> WorldManagingTool;
