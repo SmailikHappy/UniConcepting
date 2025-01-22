@@ -8,6 +8,7 @@
 
 // SlimeMold actors
 #include "SlimeMoldSourceActor.h"
+#include "WorldGeometryCache.h"
 
 // Adding gizmo to the world
 #include "BaseGizmos/TransformGizmoUtil.h"
@@ -44,7 +45,7 @@ public:
 	USlimeMoldEditorToolWorldManagingProperties() {}
 
 	UPROPERTY(EditAnywhere, Category = "yikes")
-	TArray<AActor*> GeometryToAffect;
+	AWorldGeometryCache* GeometryCacheObject;
 };
 
 

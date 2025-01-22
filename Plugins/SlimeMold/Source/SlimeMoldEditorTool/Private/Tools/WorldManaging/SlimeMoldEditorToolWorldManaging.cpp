@@ -48,6 +48,16 @@ void USlimeMoldEditorToolWorldManaging::Setup()
 	Properties = NewObject<USlimeMoldEditorToolWorldManagingProperties>(this);
 	AddToolPropertySource(Properties);
 
+    Properties->GeometryCacheObject = Cast<AWorldGeometryCache>(UGameplayStatics::GetActorOfClass(TargetWorld, AWorldGeometryCache::StaticClass()));
+
+	if (!Properties->GeometryCacheObject)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("No geometry cache object found in the world, creating a new one"));
+		Properties->GeometryCacheObject = TargetWorld->SpawnActor<AWorldGeometryCache>();
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("This step has been passed"));
+
 	// Register the custom detail customization
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");	
 
@@ -113,7 +123,7 @@ FReply USlimeMoldEditorToolWorldManaging::AddActorToGeometryCache()
 
 	for (AActor* Actor : SelectedActors)
 	{
-		Properties->GeometryToAffect.AddUnique(Actor);
+		Properties->GeometryCacheObject->GeometryActors.AddUnique(Actor);
 	}
 	return FReply::Handled();
 }
@@ -125,7 +135,7 @@ FReply USlimeMoldEditorToolWorldManaging::RemoveActorFromGeometryCache()
 
 	for (AActor* Actor : SelectedActors)
 	{
-		Properties->GeometryToAffect.Remove(Actor);
+		Properties->GeometryCacheObject->GeometryActors.Remove(Actor);
 	}
 	return FReply::Handled();
 }

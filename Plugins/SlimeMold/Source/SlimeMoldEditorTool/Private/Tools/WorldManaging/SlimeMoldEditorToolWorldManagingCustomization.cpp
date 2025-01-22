@@ -24,7 +24,7 @@ void FSlimeMoldEditorToolWorldManagingCustomization::CustomizeDetails(IDetailLay
 	IDetailCategoryBuilder& OptionsCategory = DetailBuilder.EditCategory("boooooom category");
 
 	// Add properties
-	TSharedRef<IPropertyHandle> GeometryToAffectProperty = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(USlimeMoldEditorToolWorldManagingProperties, GeometryToAffect));
+	TSharedRef<IPropertyHandle> GeometryToAffectProperty = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(USlimeMoldEditorToolWorldManagingProperties, GeometryCacheObject));
 	OptionsCategory.AddProperty(GeometryToAffectProperty);
 
 	USlimeMoldEditorToolWorldManagingProperties* WorldManaginToolsProperties = nullptr;
