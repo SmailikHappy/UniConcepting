@@ -63,7 +63,7 @@ public:
 
 	/** UInteractiveTool overrides */
 	virtual void Setup() override;
-	//virtual void Shutdown(EToolShutdownType ShutdownType) override;
+	virtual void Shutdown(EToolShutdownType ShutdownType) override;
 	virtual void OnPropertyModified(UObject* PropertySet, FProperty* Property) override;
 	virtual void Render(IToolsContextRenderAPI* RenderAPI) override;
 

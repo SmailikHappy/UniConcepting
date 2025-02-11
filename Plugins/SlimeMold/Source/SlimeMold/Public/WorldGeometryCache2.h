@@ -3,18 +3,17 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
 
-#include "WorldGeometryCache.generated.h"
+#include "WorldGeometryCache2.generated.h"
 
-UCLASS()
-class SLIMEMOLD_API AWorldGeometryCache : public AActor
+UCLASS(Blueprintable, meta = (ShowWorldContextPin))
+class SLIMEMOLD_API UWorldGeometryCache2 : public UObject
 {
 	GENERATED_BODY()
 
 public:
 	
-	AWorldGeometryCache() {}
+	UWorldGeometryCache2() {}
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	TArray<AActor*> GeometryActors;

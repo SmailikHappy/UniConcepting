@@ -61,31 +61,33 @@ void USlimeMoldEditorToolWorldManaging::Setup()
 	// Register the custom detail customization
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");	
 
-	PropertyModule.RegisterCustomClassLayout(
+	/*PropertyModule.RegisterCustomClassLayout(
 		USlimeMoldEditorToolWorldManagingProperties::StaticClass()->GetFName(),
 		FOnGetDetailCustomizationInstance::CreateStatic(&FSlimeMoldEditorToolWorldManagingCustomization::MakeInstance)
 	);
 
-	FSlimeMoldEditorToolWorldManagingCustomization::SlimeMoldEditorToolWorldManaging = MakeShareable(this);
+	FSlimeMoldEditorToolWorldManagingCustomization::SlimeMoldEditorToolWorldManaging = MakeShareable(this);*/
 }
 
-//void USlimeMoldEditorToolWorldManaging::Shutdown(EToolShutdownType ShutdownType)
-//{
-//	switch (ShutdownType)
-//	{
-//	case EToolShutdownType::Completed:
-//		UE_LOG(LogTemp, Warning, TEXT("Tool was completed"));
-//		break;
-//	case EToolShutdownType::Accept:
-//		UE_LOG(LogTemp, Warning, TEXT("Tool was accepted"));
-//		break;
-//	case EToolShutdownType::Cancel:
-//		UE_LOG(LogTemp, Warning, TEXT("Tool was cancelled"));
-//		break;
-//	default:
-//		break;
-//	}
-//}
+void USlimeMoldEditorToolWorldManaging::Shutdown(EToolShutdownType ShutdownType)
+{
+	switch (ShutdownType)
+	{
+	case EToolShutdownType::Completed:
+		UE_LOG(LogTemp, Warning, TEXT("Tool was completed"));
+		break;
+	case EToolShutdownType::Accept:
+		UE_LOG(LogTemp, Warning, TEXT("Tool was accepted"));
+		break;
+	case EToolShutdownType::Cancel:
+		UE_LOG(LogTemp, Warning, TEXT("Tool was cancelled"));
+		break;
+	default:
+		break;
+	}
+
+	//FSlimeMoldEditorToolWorldManagingCustomization::SlimeMoldEditorToolWorldManaging.Reset();
+}
 
 void USlimeMoldEditorToolWorldManaging::SetWorld(UWorld* World)
 {
