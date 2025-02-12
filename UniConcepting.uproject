@@ -26,6 +26,10 @@
 			"Enabled": true
 		},
 		{
+			"Name": "ScriptableToolsFramework",
+			"Enabled": true
+		},
+		{
 			"Name": "ScriptableToolsEditorMode",
 			"Enabled": true
 		}
