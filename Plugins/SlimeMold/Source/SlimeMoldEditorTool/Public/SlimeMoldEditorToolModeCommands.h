@@ -19,8 +19,8 @@ public:
 
 	TSharedPtr<FUICommandInfo> InteractiveTool;
 	TSharedPtr<FUICommandInfo> ExampleTool;
-	TSharedPtr<FUICommandInfo> WorldManagingTool;
-	TSharedPtr<FUICommandInfo> SourceManagingTool;
+	TSharedPtr<FUICommandInfo> PointManagerTool;
+	TSharedPtr<FUICommandInfo> LineManagerTool;
 
 protected:
 	TMap<FName, TArray<TSharedPtr<FUICommandInfo>>> Commands;

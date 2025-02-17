@@ -24,8 +24,8 @@ public:
 
 	static FString InteractiveToolName;
 	static FString ExampleToolName;
-	static FString WorldManagingToolName;
-	static FString SourceManagingToolName;
+	static FString PointManagerToolName;
+	static FString LineManagerToolName;
 
 	USlimeMoldEditorToolEditorMode();
 	virtual ~USlimeMoldEditorToolEditorMode();

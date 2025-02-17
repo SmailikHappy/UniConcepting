@@ -26,11 +26,11 @@ void FSlimeMoldEditorToolModeCommands::RegisterCommands()
 	UI_COMMAND(ExampleTool, "Example Tool", "An example tool that does nothing", EUserInterfaceActionType::ToggleButton, FInputChord());
 	ToolCommands.Add(ExampleTool);
 
-	UI_COMMAND(WorldManagingTool, "World Managing Tool", "This tool helps to manage the geometry for the slimemold as well as spawns these slime-mode sources around", EUserInterfaceActionType::ToggleButton, FInputChord());
-	ToolCommands.Add(WorldManagingTool);
+	UI_COMMAND(PointManagerTool, "Point Manager Tool", "This tool manages points", EUserInterfaceActionType::ToggleButton, FInputChord());
+	ToolCommands.Add(PointManagerTool);
 
-	UI_COMMAND(SourceManagingTool, "Source Managing Tool", "This tool manages the slimemold sources as their visuals", EUserInterfaceActionType::ToggleButton, FInputChord());
-	ToolCommands.Add(SourceManagingTool);
+	UI_COMMAND(LineManagerTool, "Line Manager Tool", "This tool manages lines", EUserInterfaceActionType::ToggleButton, FInputChord());
+	ToolCommands.Add(LineManagerTool);
 }
 
 TMap<FName, TArray<TSharedPtr<FUICommandInfo>>> FSlimeMoldEditorToolModeCommands::GetCommands()

@@ -14,10 +14,11 @@
 ////////////////////////////////////////////////////////////////////////// 
 #include "Tools/SlimeMoldEditorToolSimpleTool.h"
 #include "Tools/SlimeMoldEditorToolInteractiveTool.h"
-#include "Tools/SlimeMoldEditorToolLineTool.h"
 #include "Tools/Example/SlimeMoldEditorToolExample.h"
-#include "Tools/WorldManaging/SlimeMoldEditorToolWorldManaging.h"
-#include "Tools/SourceManaging/SlimeMoldEditorToolSourceManaging.h"
+#include "Tools/MeshEditing/MeshEditingToolBase.h"
+//#include "Tools/SkeletonEditing/SkeletonEditingToolBase.h"
+#include "Tools/SkeletonEditing/PointManagerTool.h"
+#include "Tools/SkeletonEditing/LineManagerTool.h"
 
 // step 2: register a ToolBuilder in FSlimeMoldEditorToolEditorMode::Enter() below
 
@@ -28,8 +29,8 @@ const FEditorModeID USlimeMoldEditorToolEditorMode::EM_SlimeMoldEditorToolEditor
 
 FString USlimeMoldEditorToolEditorMode::InteractiveToolName = TEXT("SlimeMoldEditorTool_MeasureDistanceTool");
 FString USlimeMoldEditorToolEditorMode::ExampleToolName = TEXT("SlimeMoldEditorTool_ExampleTool");
-FString USlimeMoldEditorToolEditorMode::WorldManagingToolName = TEXT("SlimeMoldEditorTool_WorldManagingTool");
-FString USlimeMoldEditorToolEditorMode::SourceManagingToolName = TEXT("SlimeMoldEditorTool_SourceManagingTool");
+FString USlimeMoldEditorToolEditorMode::PointManagerToolName = TEXT("SlimeMoldEditorTool_PointManagerTool");
+FString USlimeMoldEditorToolEditorMode::LineManagerToolName = TEXT("SlimeMoldEditorTool_LineManagerTool");
 
 
 USlimeMoldEditorToolEditorMode::USlimeMoldEditorToolEditorMode()
@@ -67,8 +68,8 @@ void USlimeMoldEditorToolEditorMode::Enter()
 
 	RegisterTool(SampleToolCommands.InteractiveTool, InteractiveToolName, NewObject<USlimeMoldEditorToolInteractiveToolBuilder>(this));
 	RegisterTool(SampleToolCommands.ExampleTool, ExampleToolName, NewObject<USlimeMoldEditorToolExampleBuilder>(this));
-	RegisterTool(SampleToolCommands.WorldManagingTool, WorldManagingToolName, NewObject<USlimeMoldEditorToolWorldManagingBuilder>(this));
-	RegisterTool(SampleToolCommands.SourceManagingTool, SourceManagingToolName, NewObject<USlimeMoldEditorToolSourceManagingBuilder>(this));
+	RegisterTool(SampleToolCommands.PointManagerTool, PointManagerToolName, NewObject<UPointManagerToolBuilder>(this));
+	RegisterTool(SampleToolCommands.LineManagerTool, LineManagerToolName, NewObject<ULineManagerToolBuilder>(this));
 
 	// active tool type is not relevant here, we just set to default
 	GetToolManager()->SelectActiveToolType(EToolSide::Left, ExampleToolName);

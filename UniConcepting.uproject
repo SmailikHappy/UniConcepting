@@ -32,6 +32,10 @@
 		{
 			"Name": "ScriptableToolsEditorMode",
 			"Enabled": true
+		},
+		{
+			"Name": "CSGArea",
+			"Enabled": true
 		}
 	]
 }
