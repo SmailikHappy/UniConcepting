@@ -61,6 +61,77 @@ void USkeletonEditingToolBase::AssignProperties()
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 }
 
+void USkeletonEditingToolBase::SelectPoint(USkeletonPoint* Point)
+{
+	if (SelectedPoints.empty())
+	{
+		// Create a gizmo
+	}
+
+	SelectedPoints.insert(Point);
+}
+
+void USkeletonEditingToolBase::DeselectPoint(USkeletonPoint* Point)
+{
+	if (SelectedPoints.find(Point) != SelectedPoints.end())
+	{
+		SelectedPoints.erase(Point);
+	}
+
+	if (SelectedPoints.empty())
+	{
+		// Destroy the gizmo
+	}
+}
+
+void USkeletonEditingToolBase::DeselectAllPoints()
+{
+	SelectedPoints.clear();
+	// Destroy the gizmo
+}
+
+void USkeletonEditingToolBase::DeleteSelectedPoints()
+{
+	std::set<int32> LinesIndicesToRemove;
+	for (USkeletonPoint* Point : SelectedPoints)
+	{
+		// Remove all lines connected to this point
+		/*for (int i = 0; i < TargetSlimeMoldActor->SkeletonLines.Num(); i++)
+		{
+			FSkeletonLine& Line = TargetSlimeMoldActor->SkeletonLines[i];
+
+			if (&TargetSlimeMoldActor->SkeletonPoints[Line.PointIndex1] == Point ||
+				&TargetSlimeMoldActor->SkeletonPoints[Line.PointIndex2] == Point)
+			{
+				LinesIndicesToRemove.insert(i);
+			}
+		}*/
+
+		//TargetSlimeMoldActor->SkeletonLines.RemoveAll([Point](FSkeletonLine Line) {
+		//	return Line.Point1 == Point || Line.Point2 == Point;
+		//	});
+
+		for (int i = 0; i < TargetSlimeMoldActor->SkeletonLines.Num(); i++)
+		{
+			FSkeletonLine& Line = TargetSlimeMoldActor->SkeletonLines[i];
+			if (Line.Point1 == Point || Line.Point2 == Point)
+			{
+				TargetSlimeMoldActor->SkeletonLines.RemoveAt(i--);
+			}
+		}
+	}
+	
+	DeselectAllPoints();
+}
+
+void USkeletonEditingToolBase::ConnectPoints(USkeletonPoint* Point1, USkeletonPoint* Point2)
+{
+}
+
+void USkeletonEditingToolBase::DisconnectPoints(USkeletonPoint* Point1, USkeletonPoint* Point2)
+{
+}
+
 FInputRayHit USkeletonEditingToolBase::FindRayHit(const FRay& WorldRay, FVector& HitPos)
 {
 	// trace a ray into the World
@@ -82,18 +153,19 @@ void USkeletonEditingToolBase::Render(IToolsContextRenderAPI* RenderAPI)
 		// Render the skeleton with debug view
 		FPrimitiveDrawInterface* PDI = RenderAPI->GetPrimitiveDrawInterface();
 
-		for (FSkeletonLine Line : TargetSlimeMoldActor->SkeletonLines)
+		for (const FSkeletonLine& Line : TargetSlimeMoldActor->SkeletonLines)
 		{
-			PDI->DrawLine(TargetSlimeMoldActor->SkeletonPoints[Line.PointIndex1].WorldPos, TargetSlimeMoldActor->SkeletonPoints[Line.PointIndex2].WorldPos,
+			PDI->DrawLine(Line.Point1->WorldPos, Line.Point2->WorldPos,
 						  FLinearColor(0.0f, 1.0f, 1.0f, 1.0f), SDPG_Foreground, Properties->DebugLineThickness);
 		}
 
-		for (FSkeletonPoint Point : TargetSlimeMoldActor->SkeletonPoints)
+		for (USkeletonPoint* Point : TargetSlimeMoldActor->SkeletonPoints)
 		{
-			PDI->DrawPoint(Point.WorldPos, FLinearColor::White, Properties->DebugPointSize, SDPG_Foreground);
+			FLinearColor PointColor = SelectedPoints.find(Point) != SelectedPoints.end() ? FLinearColor::Red : FLinearColor::White;
+			
+			PDI->DrawPoint(Point->WorldPos, FLinearColor::White, Properties->DebugPointSize, SDPG_Foreground);
 		}
 	}
-
 }
 
 FInputRayHit USkeletonEditingToolBase::IsHitByClick(const FInputDeviceRay& ClickPos)

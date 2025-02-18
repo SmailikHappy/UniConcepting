@@ -18,7 +18,7 @@ public:
 	ASlimeMoldBase();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<FSkeletonPoint> SkeletonPoints;
+	TArray<USkeletonPoint*> SkeletonPoints;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<FSkeletonLine> SkeletonLines;

@@ -5,13 +5,15 @@
 #include "CoreMinimal.h"
 #include "Structs.generated.h"
 
-USTRUCT(BlueprintType)
-struct FSkeletonPoint
+UCLASS(BlueprintType)
+class USkeletonPoint : public UObject
 {
 	GENERATED_BODY()
 
-	FSkeletonPoint() : WorldPos(FVector::ZeroVector), WorldNormal(FVector::ZAxisVector) {}
-	FSkeletonPoint(FVector NewWorldPos, FVector NewWorldNormal) : WorldPos(NewWorldPos), WorldNormal(NewWorldNormal) {}
+public:
+
+	USkeletonPoint() : WorldPos(FVector::ZeroVector), WorldNormal(FVector::ZAxisVector) {}
+	USkeletonPoint(FVector NewWorldPos, FVector NewWorldNormal) : WorldPos(NewWorldPos), WorldNormal(NewWorldNormal) {}
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector WorldPos;
@@ -25,13 +27,12 @@ struct FSkeletonLine
 {
 	GENERATED_BODY()
 
-	FSkeletonLine() : PointIndex1(-1), PointIndex2(-1) {}
-	FSkeletonLine(int i, int j) : PointIndex1(i), PointIndex2(j) {}
-
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 PointIndex1;
+	FSkeletonLine() {}
+	FSkeletonLine(USkeletonPoint* i, USkeletonPoint* j) : Point1(i), Point2(j) {}
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 PointIndex2;
+	USkeletonPoint* Point1 = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	USkeletonPoint* Point2 = nullptr;
 };

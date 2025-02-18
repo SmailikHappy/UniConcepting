@@ -3,12 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include <set>
+#include <vector>
 #include "InteractiveToolBuilder.h"
 #include "BaseTools/ClickDragTool.h"
 #include "BaseTools/SingleClickTool.h"
 
 // SlimeMold actors
 #include "SlimeMoldBase.h"
+#include "Structs.h"
 
 // Adding gizmo to the world
 #include "BaseGizmos/TransformGizmoUtil.h"
@@ -87,14 +90,26 @@ protected:
 	
 	/** Protected functions available in base */
 	void AssignProperties();
+	void SelectPoint(USkeletonPoint* Point);
+	void DeselectPoint(USkeletonPoint* Point);
+	void DeselectAllPoints();
+	void DeleteSelectedPoints();
+	void ConnectPoints(USkeletonPoint* Point1, USkeletonPoint* Point2);
+	void DisconnectPoints(USkeletonPoint* Point1, USkeletonPoint* Point2);
+	//void DisconnectPoints(FSkeletonLine* Line);
+
+
+private:
+	
+	FInputRayHit FindRayHit(const FRay& WorldRay, FVector& HitPos);
+	//void CreateGizmo(Transform IntialTransform);
 
 protected:
 
 	bool ShiftIsPressed = false;
 	bool CtrlIsPressed = false;
 
-	UWorld* TargetWorld = nullptr;		// target World we will raycast into
-	ASlimeMoldBase* TargetSlimeMoldActor = nullptr;	// target actor we will operate on
-
-	FInputRayHit FindRayHit(const FRay& WorldRay, FVector& HitPos);		// raycasts into World
+	UWorld* TargetWorld = nullptr;
+	ASlimeMoldBase* TargetSlimeMoldActor = nullptr;
+	std::set<USkeletonPoint*> SelectedPoints;		// set ensures no duplicates
 };
