@@ -71,6 +71,7 @@ public:
 	/** UInteractiveTool overrides */
 	virtual void Setup() override;
 	virtual void OnPropertyModified(UObject* PropertySet, FProperty* Property) override;
+	virtual void Shutdown(EToolShutdownType ShutdownType) override;
 	virtual void Render(IToolsContextRenderAPI* RenderAPI) override;
 
 
@@ -96,13 +97,19 @@ protected:
 	void DeleteSelectedPoints();
 	void ConnectPoints(USkeletonPoint* Point1, USkeletonPoint* Point2);
 	void DisconnectPoints(USkeletonPoint* Point1, USkeletonPoint* Point2);
-	//void DisconnectPoints(FSkeletonLine* Line);
+	USkeletonPoint* GetPointFromMousePos(const FInputDeviceRay& ClickPos);
 
 
 private:
 	
 	FInputRayHit FindRayHit(const FRay& WorldRay, FVector& HitPos);
-	//void CreateGizmo(Transform IntialTransform);
+	void ShowGizmo(const FTransform& IntialTransform);
+	void HideGizmo();
+	void CreateGizmo();
+	void DestroyGizmo();
+	FTransform PreviousGizmoTransform = FTransform::Identity;
+	UCombinedTransformGizmo* TransformGizmo = nullptr;
+	FVector GizmoPositionDelta = FVector::ZeroVector;
 
 protected:
 

@@ -38,11 +38,10 @@ UInteractiveTool* UPointManagerToolBuilder::BuildTool(const FToolBuilderState& S
 
 void UPointManagerTool::Setup()
 {
-	USkeletonEditingToolBase::Setup();
-
 	TargetSlimeMoldActor = USlimeMoldEditorFuncLib::GetSingleSelectedSlimeMoldObject();
-
 	check(TargetSlimeMoldActor);
+
+	USkeletonEditingToolBase::Setup();
 
 	AssignProperties();
 }
@@ -80,17 +79,34 @@ void UPointManagerTool::OnPropertyModified(UObject* PropertySet, FProperty* Prop
 
 void UPointManagerTool::MouseClick(const FInputDeviceRay& ClickPos)
 {
-	FText Title = LOCTEXT("ActorInfoDialogTitle", "Actor Info");
-	FText ActorInfoMsg = LOCTEXT("ActorInfoDialogMsg", "No msg");
-
-	if (CtrlIsPressed) {
-		ActorInfoMsg = LOCTEXT("ActorInfoDialogMsg", "Ctrl msg");
+	if (CtrlIsPressed)
+	{
+		FCollisionObjectQueryParams QueryParams(FCollisionObjectQueryParams::AllObjects);
+		FHitResult Result;
+		bool bHitWorld = TargetWorld->LineTraceSingleByObjectType(Result, ClickPos.WorldRay.Origin, ClickPos.WorldRay.PointAt(999999), QueryParams);
+		if (bHitWorld)
+		{
+			// Add a new point
+			USkeletonPoint* NewPoint = NewObject<USkeletonPoint>(TargetSlimeMoldActor);
+			//USkeletonPoint* NewPoint = NewObject<USkeletonPoint>();
+			NewPoint->WorldPos = Result.Location;
+			NewPoint->WorldNormal = Result.ImpactNormal;
+			TargetSlimeMoldActor->SkeletonPoints.Add(NewPoint);
+			SelectPoint(NewPoint);
+		}
 	}
-	if (ShiftIsPressed) {
-		ActorInfoMsg = LOCTEXT("ActorInfoDialogMsg", "Shift msg");
+
+	if (ShiftIsPressed)
+	{
+		ConnectPoints(*(SelectedPoints.begin()), *(++SelectedPoints.begin()));
+		return;
 	}
 
-	FMessageDialog::Open(EAppMsgType::Ok, ActorInfoMsg, Title);
+	USkeletonPoint* ClickedPoint = GetPointFromMousePos(ClickPos);
+	if (ClickedPoint)
+	{
+		SelectPoint(ClickedPoint);
+	}
 }
 
 #undef LOCTEXT_NAMESPACE

@@ -32,6 +32,8 @@ void USkeletonEditingToolBase::Setup()
 
 	SingleClickBehavior->Modifiers.RegisterModifier(1, FInputDeviceState::IsShiftKeyDown);
 	SingleClickBehavior->Modifiers.RegisterModifier(2, FInputDeviceState::IsCtrlKeyDown);
+
+	CreateGizmo();
 }
 
 void USkeletonEditingToolBase::SetWorld(UWorld* World)
@@ -49,6 +51,11 @@ void USkeletonEditingToolBase::OnPropertyModified(UObject* PropertySet, FPropert
 	UE_LOG(LogTemp, Warning, TEXT("Property modified"));
 }
 
+void USkeletonEditingToolBase::Shutdown(EToolShutdownType ShutdownType)
+{
+	DestroyGizmo();
+}
+
 void USkeletonEditingToolBase::AssignProperties()
 {
 	// Create the property set and register it with the Tool
@@ -63,9 +70,11 @@ void USkeletonEditingToolBase::AssignProperties()
 
 void USkeletonEditingToolBase::SelectPoint(USkeletonPoint* Point)
 {
+	check(Point);
+
 	if (SelectedPoints.empty())
 	{
-		// Create a gizmo
+		ShowGizmo(FTransform(Point->WorldPos));
 	}
 
 	SelectedPoints.insert(Point);
@@ -87,7 +96,7 @@ void USkeletonEditingToolBase::DeselectPoint(USkeletonPoint* Point)
 void USkeletonEditingToolBase::DeselectAllPoints()
 {
 	SelectedPoints.clear();
-	// Destroy the gizmo
+	HideGizmo();
 }
 
 void USkeletonEditingToolBase::DeleteSelectedPoints()
@@ -126,10 +135,59 @@ void USkeletonEditingToolBase::DeleteSelectedPoints()
 
 void USkeletonEditingToolBase::ConnectPoints(USkeletonPoint* Point1, USkeletonPoint* Point2)
 {
+	// Check if the points are already connected
+	for (const FSkeletonLine& Line : TargetSlimeMoldActor->SkeletonLines)
+	{
+		if ((Line.Point1 == Point1 && Line.Point2 == Point2) ||
+			(Line.Point1 == Point2 && Line.Point2 == Point1))
+		{
+			return;
+		}
+	}
+	// Add a new line
+	FSkeletonLine NewLine;
+	NewLine.Point1 = Point1;
+	NewLine.Point2 = Point2;
+	TargetSlimeMoldActor->SkeletonLines.Add(NewLine);
 }
 
 void USkeletonEditingToolBase::DisconnectPoints(USkeletonPoint* Point1, USkeletonPoint* Point2)
 {
+	// Find the line to remove
+	for (int i = 0; i < TargetSlimeMoldActor->SkeletonLines.Num(); i++)
+	{
+		FSkeletonLine& Line = TargetSlimeMoldActor->SkeletonLines[i];
+		if ((Line.Point1 == Point1 && Line.Point2 == Point2) ||
+			(Line.Point1 == Point2 && Line.Point2 == Point1))
+		{
+			TargetSlimeMoldActor->SkeletonLines.RemoveAt(i);
+			return;
+		}
+	}
+}
+
+USkeletonPoint* USkeletonEditingToolBase::GetPointFromMousePos(const FInputDeviceRay& ClickPos)
+{
+	FVector HitPos;
+	FInputRayHit Hit = FindRayHit(ClickPos.WorldRay, HitPos);
+
+	if (Hit.bHit)
+	{
+		// Find the closest point to the hit position
+		USkeletonPoint* ClosestPoint = nullptr;
+		float ClosestDist = FLT_MAX;
+		for (USkeletonPoint* Point : TargetSlimeMoldActor->SkeletonPoints)
+		{
+			float Dist = FVector::Dist(Point->WorldPos, HitPos);
+			if (Dist < ClosestDist)
+			{
+				ClosestDist = Dist;
+				ClosestPoint = Point;
+			}
+		}
+		return ClosestPoint;
+	}
+	return nullptr;
 }
 
 FInputRayHit USkeletonEditingToolBase::FindRayHit(const FRay& WorldRay, FVector& HitPos)
@@ -146,6 +204,60 @@ FInputRayHit USkeletonEditingToolBase::FindRayHit(const FRay& WorldRay, FVector&
 	return FInputRayHit();
 }
 
+void USkeletonEditingToolBase::DestroyGizmo()
+{
+	UInteractiveGizmoManager* const GizmoManager = GetToolManager()->GetPairedGizmoManager();
+	ensure(GizmoManager);
+	GizmoManager->DestroyGizmo(TransformGizmo);
+
+	//TransformGizmo = nullptr;
+}
+
+void USkeletonEditingToolBase::ShowGizmo(const FTransform& IntialTransform)
+{
+	PreviousGizmoTransform = IntialTransform;
+	TransformGizmo->SetNewGizmoTransform(IntialTransform);
+	TransformGizmo->SetVisibility(true);
+}
+
+void USkeletonEditingToolBase::HideGizmo()
+{
+	TransformGizmo->SetVisibility(false);
+}
+
+void USkeletonEditingToolBase::CreateGizmo()
+{
+	UInteractiveGizmoManager* const GizmoManager = GetToolManager()->GetPairedGizmoManager();
+	ensure(GizmoManager);
+
+	UTransformProxy* GizmoProxy = NewObject<UTransformProxy>(this);
+	ensure(GizmoProxy);
+
+	TransformGizmo = GizmoManager->Create3AxisTransformGizmo(this);
+	ensure(TransformGizmo);
+
+	TransformGizmo->SetActiveTarget(GizmoProxy, GetToolManager());
+
+	GizmoProxy->OnTransformChanged.AddWeakLambda(this, [this](UTransformProxy*, FTransform NewTransform)
+		{
+			GizmoPositionDelta = NewTransform.GetLocation() - PreviousGizmoTransform.GetLocation();
+
+			if (!SelectedPoints.empty())
+			{
+				for (USkeletonPoint* Point : SelectedPoints)
+				{
+					Point->WorldPos += GizmoPositionDelta;
+				}
+			}
+
+			PreviousGizmoTransform = NewTransform;
+		}
+	);
+
+	TransformGizmo->CurrentCoordinateSystem = EToolContextCoordinateSystem::World;
+	TransformGizmo->SetVisibility(false);
+}
+
 void USkeletonEditingToolBase::Render(IToolsContextRenderAPI* RenderAPI)
 {
 	if (TargetSlimeMoldActor)
@@ -156,14 +268,14 @@ void USkeletonEditingToolBase::Render(IToolsContextRenderAPI* RenderAPI)
 		for (const FSkeletonLine& Line : TargetSlimeMoldActor->SkeletonLines)
 		{
 			PDI->DrawLine(Line.Point1->WorldPos, Line.Point2->WorldPos,
-						  FLinearColor(0.0f, 1.0f, 1.0f, 1.0f), SDPG_Foreground, Properties->DebugLineThickness);
+				FLinearColor(0.0f, 1.0f, 1.0f, 1.0f), SDPG_Foreground, Properties->DebugLineThickness);
 		}
 
 		for (USkeletonPoint* Point : TargetSlimeMoldActor->SkeletonPoints)
 		{
 			FLinearColor PointColor = SelectedPoints.find(Point) != SelectedPoints.end() ? FLinearColor::Red : FLinearColor::White;
-			
-			PDI->DrawPoint(Point->WorldPos, FLinearColor::White, Properties->DebugPointSize, SDPG_Foreground);
+
+			PDI->DrawPoint(Point->WorldPos, PointColor, Properties->DebugPointSize, SDPG_Foreground);
 		}
 	}
 }

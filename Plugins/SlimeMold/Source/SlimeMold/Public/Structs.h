@@ -6,24 +6,21 @@
 #include "Structs.generated.h"
 
 UCLASS(BlueprintType)
-class USkeletonPoint : public UObject
+class SLIMEMOLD_API USkeletonPoint : public UObject
 {
 	GENERATED_BODY()
 
 public:
 
-	USkeletonPoint() : WorldPos(FVector::ZeroVector), WorldNormal(FVector::ZAxisVector) {}
-	USkeletonPoint(FVector NewWorldPos, FVector NewWorldNormal) : WorldPos(NewWorldPos), WorldNormal(NewWorldNormal) {}
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector WorldPos = FVector::ZeroVector;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FVector WorldPos;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FVector WorldNormal;
+	FVector WorldNormal = FVector::ZAxisVector;
 };
 
 USTRUCT(BlueprintType)
-struct FSkeletonLine
+struct SLIMEMOLD_API FSkeletonLine
 {
 	GENERATED_BODY()
 
@@ -35,4 +32,4 @@ struct FSkeletonLine
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	USkeletonPoint* Point2 = nullptr;
-};
+}; 
