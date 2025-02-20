@@ -46,7 +46,9 @@ public:
 
 protected:
 
-	void CreatePoint(const FInputDeviceRay& ClickPos);
+	virtual void RegisterActions(FInteractiveToolActionSet& ActionSet) override;
 
+	void CreatePoint(const FInputDeviceRay& ClickPos);
+	void Msg(const FString& Msg);
 
 };

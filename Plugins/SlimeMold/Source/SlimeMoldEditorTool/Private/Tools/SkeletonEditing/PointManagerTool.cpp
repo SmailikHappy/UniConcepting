@@ -98,6 +98,22 @@ void UPointManagerTool::MouseClick(const FInputDeviceRay& ClickPos)
 	}
 }
 
+void UPointManagerTool::RegisterActions(FInteractiveToolActionSet& ActionSet)
+{
+	ActionSet.RegisterAction(
+		this,
+		(int32)EStandardToolActions::BaseClientDefinedActionID + 61,
+		TEXT("Action1"),
+		LOCTEXT("Action1Key", "Action 1 SUIN"),
+		LOCTEXT("Action1Desc", "Action 1 description"),
+		EModifierKey::None,
+		EKeys::W,
+		[this]() { Msg("Action 1 executed"); }
+	);
+
+	UE_LOG(LogTemp, Warning, TEXT("actions registered"));
+}
+
 void UPointManagerTool::CreatePoint(const FInputDeviceRay& ClickPos)
 {
 	FCollisionObjectQueryParams QueryParams(FCollisionObjectQueryParams::AllObjects);
@@ -113,6 +129,15 @@ void UPointManagerTool::CreatePoint(const FInputDeviceRay& ClickPos)
 		TargetSlimeMoldActor->SkeletonPoints.Add(NewPoint);
 		SelectPoint(NewPoint);
 	}
+}
+
+void UPointManagerTool::Msg(const FString& Msg)
+{
+	FText Title = LOCTEXT("ActorInfoDialogTitle", "Info");
+
+	FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(Msg), Title);
+
+	UE_LOG(LogTemp, Warning, TEXT("some text lol"));
 }
 
 #undef LOCTEXT_NAMESPACE
