@@ -3,8 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include <set>
-#include <vector>
 #include "InteractiveToolBuilder.h"
 #include "BaseTools/ClickDragTool.h"
 #include "BaseTools/SingleClickTool.h"
@@ -118,5 +116,5 @@ protected:
 
 	UWorld* TargetWorld = nullptr;
 	ASlimeMoldBase* TargetSlimeMoldActor = nullptr;
-	std::set<USkeletonPoint*> SelectedPoints;		// set ensures no duplicates
+	TSet<USkeletonPoint*> SelectedPoints;		// set ensures no duplicates
 };

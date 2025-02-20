@@ -72,36 +72,35 @@ void USkeletonEditingToolBase::SelectPoint(USkeletonPoint* Point)
 {
 	check(Point);
 
-	if (SelectedPoints.empty())
+	if (SelectedPoints.IsEmpty())
 	{
 		ShowGizmo(FTransform(Point->WorldPos));
 	}
 
-	SelectedPoints.insert(Point);
+	SelectedPoints.Add(Point);
 }
 
 void USkeletonEditingToolBase::DeselectPoint(USkeletonPoint* Point)
 {
-	if (SelectedPoints.find(Point) != SelectedPoints.end())
+	if (SelectedPoints.Contains(Point))
 	{
-		SelectedPoints.erase(Point);
+		SelectedPoints.Remove(Point);
 	}
 
-	if (SelectedPoints.empty())
+	if (SelectedPoints.IsEmpty())
 	{
-		// Destroy the gizmo
+		HideGizmo();
 	}
 }
 
 void USkeletonEditingToolBase::DeselectAllPoints()
 {
-	SelectedPoints.clear();
+	SelectedPoints.Empty();
 	HideGizmo();
 }
 
 void USkeletonEditingToolBase::DeleteSelectedPoints()
 {
-	std::set<int32> LinesIndicesToRemove;
 	for (USkeletonPoint* Point : SelectedPoints)
 	{
 		// Remove all lines connected to this point
@@ -210,7 +209,7 @@ void USkeletonEditingToolBase::DestroyGizmo()
 	ensure(GizmoManager);
 	GizmoManager->DestroyGizmo(TransformGizmo);
 
-	//TransformGizmo = nullptr;
+	TransformGizmo = nullptr;
 }
 
 void USkeletonEditingToolBase::ShowGizmo(const FTransform& IntialTransform)
@@ -242,12 +241,9 @@ void USkeletonEditingToolBase::CreateGizmo()
 		{
 			GizmoPositionDelta = NewTransform.GetLocation() - PreviousGizmoTransform.GetLocation();
 
-			if (!SelectedPoints.empty())
+			for (USkeletonPoint* Point : SelectedPoints)
 			{
-				for (USkeletonPoint* Point : SelectedPoints)
-				{
-					Point->WorldPos += GizmoPositionDelta;
-				}
+				Point->WorldPos += GizmoPositionDelta;
 			}
 
 			PreviousGizmoTransform = NewTransform;
@@ -273,7 +269,7 @@ void USkeletonEditingToolBase::Render(IToolsContextRenderAPI* RenderAPI)
 
 		for (USkeletonPoint* Point : TargetSlimeMoldActor->SkeletonPoints)
 		{
-			FLinearColor PointColor = SelectedPoints.find(Point) != SelectedPoints.end() ? FLinearColor::Red : FLinearColor::White;
+			FLinearColor PointColor = SelectedPoints.Contains(Point) ? FLinearColor::Red : FLinearColor::White;
 
 			PDI->DrawPoint(Point->WorldPos, PointColor, Properties->DebugPointSize, SDPG_Foreground);
 		}

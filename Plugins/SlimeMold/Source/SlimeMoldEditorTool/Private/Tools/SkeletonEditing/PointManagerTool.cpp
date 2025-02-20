@@ -88,7 +88,7 @@ void UPointManagerTool::MouseClick(const FInputDeviceRay& ClickPos)
 		{
 			// Add a new point
 			USkeletonPoint* NewPoint = NewObject<USkeletonPoint>(TargetSlimeMoldActor);
-			//USkeletonPoint* NewPoint = NewObject<USkeletonPoint>();
+			//NewPoint->SetFlags(NewPoint->GetFlags() | RF_Transactional);
 			NewPoint->WorldPos = Result.Location;
 			NewPoint->WorldNormal = Result.ImpactNormal;
 			TargetSlimeMoldActor->SkeletonPoints.Add(NewPoint);
@@ -98,7 +98,7 @@ void UPointManagerTool::MouseClick(const FInputDeviceRay& ClickPos)
 
 	if (ShiftIsPressed)
 	{
-		ConnectPoints(*(SelectedPoints.begin()), *(++SelectedPoints.begin()));
+		DisconnectPoints(SelectedPoints.Get(FSetElementId::FromInteger(0)), SelectedPoints.Get(FSetElementId::FromInteger(SelectedPoints.Num()-1)));
 		return;
 	}
 
