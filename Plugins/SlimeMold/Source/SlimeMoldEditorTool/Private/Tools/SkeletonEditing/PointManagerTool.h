@@ -44,5 +44,9 @@ public:
 	/** USkeletonEditingToolBase overrides */
 	void MouseClick(const FInputDeviceRay& ClickPos) override;
 
+protected:
+
+	void CreatePoint(const FInputDeviceRay& ClickPos);
+
 
 };

@@ -81,24 +81,13 @@ void UPointManagerTool::MouseClick(const FInputDeviceRay& ClickPos)
 {
 	if (CtrlIsPressed)
 	{
-		FCollisionObjectQueryParams QueryParams(FCollisionObjectQueryParams::AllObjects);
-		FHitResult Result;
-		bool bHitWorld = TargetWorld->LineTraceSingleByObjectType(Result, ClickPos.WorldRay.Origin, ClickPos.WorldRay.PointAt(999999), QueryParams);
-		if (bHitWorld)
-		{
-			// Add a new point
-			USkeletonPoint* NewPoint = NewObject<USkeletonPoint>(TargetSlimeMoldActor);
-			//NewPoint->SetFlags(NewPoint->GetFlags() | RF_Transactional);
-			NewPoint->WorldPos = Result.Location;
-			NewPoint->WorldNormal = Result.ImpactNormal;
-			TargetSlimeMoldActor->SkeletonPoints.Add(NewPoint);
-			SelectPoint(NewPoint);
-		}
+		ConnectPoints(SelectedPoints.Get(FSetElementId::FromInteger(0)), SelectedPoints.Get(FSetElementId::FromInteger(SelectedPoints.Num() - 1)));
+		return;
 	}
 
 	if (ShiftIsPressed)
 	{
-		DisconnectPoints(SelectedPoints.Get(FSetElementId::FromInteger(0)), SelectedPoints.Get(FSetElementId::FromInteger(SelectedPoints.Num()-1)));
+		DeleteSelectedPoints();
 		return;
 	}
 
@@ -106,6 +95,23 @@ void UPointManagerTool::MouseClick(const FInputDeviceRay& ClickPos)
 	if (ClickedPoint)
 	{
 		SelectPoint(ClickedPoint);
+	}
+}
+
+void UPointManagerTool::CreatePoint(const FInputDeviceRay& ClickPos)
+{
+	FCollisionObjectQueryParams QueryParams(FCollisionObjectQueryParams::AllObjects);
+	FHitResult Result;
+	bool bHitWorld = TargetWorld->LineTraceSingleByObjectType(Result, ClickPos.WorldRay.Origin, ClickPos.WorldRay.PointAt(999999), QueryParams);
+	if (bHitWorld)
+	{
+		// Add a new point
+		USkeletonPoint* NewPoint = NewObject<USkeletonPoint>(TargetSlimeMoldActor);
+		//NewPoint->SetFlags(NewPoint->GetFlags() | RF_Transactional);
+		NewPoint->WorldPos = Result.Location;
+		NewPoint->WorldNormal = Result.ImpactNormal;
+		TargetSlimeMoldActor->SkeletonPoints.Add(NewPoint);
+		SelectPoint(NewPoint);
 	}
 }
 

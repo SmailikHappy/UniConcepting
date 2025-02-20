@@ -127,6 +127,8 @@ void USkeletonEditingToolBase::DeleteSelectedPoints()
 				TargetSlimeMoldActor->SkeletonLines.RemoveAt(i--);
 			}
 		}
+
+		TargetSlimeMoldActor->SkeletonPoints.Remove(Point);
 	}
 	
 	DeselectAllPoints();
