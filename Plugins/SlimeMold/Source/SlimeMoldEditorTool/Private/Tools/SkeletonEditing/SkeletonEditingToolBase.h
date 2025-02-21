@@ -59,7 +59,7 @@ public:
  * Tool logic
  */
 UCLASS()
-class SLIMEMOLDEDITORTOOL_API USkeletonEditingToolBase : public UInteractiveTool, public IClickBehaviorTarget
+class SLIMEMOLDEDITORTOOL_API USkeletonEditingToolBase : public UInteractiveTool, public IHoverBehaviorTarget, public IClickDragBehaviorTarget
 {
 	GENERATED_BODY()
 
@@ -74,9 +74,24 @@ public:
 
 
 	/** IClickBehaviorTarget implementation */
-	virtual FInputRayHit IsHitByClick(const FInputDeviceRay& ClickPos) override;
-	virtual void OnClicked(const FInputDeviceRay& ClickPos) override;
+	//virtual FInputRayHit IsHitByClick(const FInputDeviceRay& ClickPos) override;
+	//virtual void OnClicked(const FInputDeviceRay& ClickPos) override;
+
+	/** IModifierToggleBehaviorTarget implementation */
 	void OnUpdateModifierState(int ModifierID, bool bIsOn) override; 
+
+	/** IHoverBehaviorTarget implementation */
+	FInputRayHit BeginHoverSequenceHitTest(const FInputDeviceRay& PressPos) override { return MouseHittingWorld(PressPos); };
+	void OnBeginHover(const FInputDeviceRay& ClickPos) override {};
+	void OnEndHover() override {};
+	bool OnUpdateHover(const FInputDeviceRay& DevicePos) override { MouseUpdate(DevicePos); return true; };
+
+	/** IClickDragBehaviorTarget implementation */
+	FInputRayHit CanBeginClickDragSequence(const FInputDeviceRay& PressPos) override { return MouseHittingWorld(PressPos); };
+	void OnClickPress(const FInputDeviceRay& PressPos) override { MouseDragBeginRay = PressPos; MouseIsPressed = true; MouseDragBegin(); };
+	void OnClickDrag(const FInputDeviceRay& DragPos) override { MouseUpdate(DragPos); };
+	void OnClickRelease(const FInputDeviceRay& ReleasePos) override { MouseDragEndRay = ReleasePos; MouseIsPressed = false; MouseDragEnd(); };
+	void OnTerminateDragSequence() override {};
 
 protected:
 	/** Properties of the tool are stored here */
@@ -84,7 +99,9 @@ protected:
 	TObjectPtr<USkeletonEditingToolBaseProperties> Properties;
 
 	/** Virtual functions for child classes */
-	virtual void MouseClick(const FInputDeviceRay& ClickPos) {};
+	virtual void MouseUpdate(const FInputDeviceRay& DevicePos) {};
+	virtual void MouseDragBegin() {};
+	virtual void MouseDragEnd() {};
 
 	
 	/** Protected functions available in base */
@@ -97,10 +114,11 @@ protected:
 	void DisconnectPoints(USkeletonPoint* Point1, USkeletonPoint* Point2);
 	USkeletonPoint* GetPointFromMousePos(const FInputDeviceRay& ClickPos);
 
+	FInputRayHit FindRayHit(const FRay& WorldRay, FVector& HitPos);
 
 private:
-	
-	FInputRayHit FindRayHit(const FRay& WorldRay, FVector& HitPos);
+	/** Utility functions */
+	FInputRayHit MouseHittingWorld(const FInputDeviceRay& ClickPos);
 	void ShowGizmo(const FTransform& IntialTransform);
 	void HideGizmo();
 	void CreateGizmo();
@@ -113,6 +131,9 @@ protected:
 
 	bool ShiftIsPressed = false;
 	bool CtrlIsPressed = false;
+	bool MouseIsPressed = false;
+	FInputDeviceRay MouseDragBeginRay;
+	FInputDeviceRay MouseDragEndRay;
 
 	UWorld* TargetWorld = nullptr;
 	ASlimeMoldBase* TargetSlimeMoldActor = nullptr;

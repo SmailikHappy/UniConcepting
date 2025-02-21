@@ -4,6 +4,9 @@
 #include "InteractiveToolManager.h"
 #include "ToolBuilderUtil.h"
 #include "BaseBehaviors/SingleClickBehavior.h"
+#include "BaseBehaviors/ClickDragBehavior.h"
+#include "BaseBehaviors/MouseHoverBehavior.h"
+
 
 // for raycast into World
 #include "CollisionQueryParams.h"
@@ -26,12 +29,23 @@ void USkeletonEditingToolBase::Setup()
 	UInteractiveTool::Setup();
 
 	// Add default mouse input behavior
-	USingleClickInputBehavior* SingleClickBehavior = NewObject<USingleClickInputBehavior>();
-	SingleClickBehavior->Initialize(this);
-	AddInputBehavior(SingleClickBehavior);
+	//USingleClickInputBehavior* SingleClickBehavior = NewObject<USingleClickInputBehavior>();
+	//SingleClickBehavior->Initialize(this);
+	//AddInputBehavior(SingleClickBehavior);
 
-	SingleClickBehavior->Modifiers.RegisterModifier(1, FInputDeviceState::IsShiftKeyDown);
-	SingleClickBehavior->Modifiers.RegisterModifier(2, FInputDeviceState::IsCtrlKeyDown);
+	//SingleClickBehavior->Modifiers.RegisterModifier(1, FInputDeviceState::IsShiftKeyDown);
+	//SingleClickBehavior->Modifiers.RegisterModifier(2, FInputDeviceState::IsCtrlKeyDown);
+
+	UMouseHoverBehavior* HoverBehavior = NewObject<UMouseHoverBehavior>();
+	HoverBehavior->Initialize(this);
+	AddInputBehavior(HoverBehavior);
+
+	UClickDragInputBehavior* ClickDragBehavior = NewObject<UClickDragInputBehavior>();
+	ClickDragBehavior->Initialize(this);
+	AddInputBehavior(ClickDragBehavior);
+
+	HoverBehavior->Modifiers.RegisterModifier(1, FInputDeviceState::IsShiftKeyDown);
+	HoverBehavior->Modifiers.RegisterModifier(2, FInputDeviceState::IsCtrlKeyDown);
 
 	CreateGizmo();
 }
@@ -278,7 +292,7 @@ void USkeletonEditingToolBase::Render(IToolsContextRenderAPI* RenderAPI)
 	}
 }
 
-FInputRayHit USkeletonEditingToolBase::IsHitByClick(const FInputDeviceRay& ClickPos)
+FInputRayHit USkeletonEditingToolBase::MouseHittingWorld(const FInputDeviceRay& ClickPos)
 {
 	FVector RayStart = ClickPos.WorldRay.Origin;
 	FVector RayEnd = ClickPos.WorldRay.PointAt(99999999.f);
@@ -301,10 +315,10 @@ FInputRayHit USkeletonEditingToolBase::IsHitByClick(const FInputDeviceRay& Click
 	return Hit;
 }
 
-void USkeletonEditingToolBase::OnClicked(const FInputDeviceRay& ClickPos)
-{
-	MouseClick(ClickPos);
-}
+//void USkeletonEditingToolBase::OnClicked(const FInputDeviceRay& ClickPos)
+//{
+//	MouseClick(ClickPos);
+//}
 
 void USkeletonEditingToolBase::OnUpdateModifierState(int ModifierID, bool bIsOn)
 {

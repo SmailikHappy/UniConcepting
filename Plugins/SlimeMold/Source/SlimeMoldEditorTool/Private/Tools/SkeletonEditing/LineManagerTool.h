@@ -42,5 +42,5 @@ public:
 	virtual void OnPropertyModified(UObject* PropertySet, FProperty* Property) override;
 
 	/** USkeletonEditingToolBase overrides */
-	void MouseClick(const FInputDeviceRay& ClickPos) override;
+	//void MouseClick(const FInputDeviceRay& ClickPos) override;
 };

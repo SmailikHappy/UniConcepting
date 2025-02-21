@@ -65,13 +65,4 @@ void ULineManagerTool::OnPropertyModified(UObject* PropertySet, FProperty* Prope
 	if (PropertySet != Properties) return;
 }
 
-void ULineManagerTool::MouseClick(const FInputDeviceRay& ClickPos)
-{
-	FText ActorInfoMsg = LOCTEXT("ActorInfoDialogMsg", "Line msg");
-
-	FText Title = LOCTEXT("ActorInfoDialogTitle", "Actor Info");
-	// JAH TODO: consider if we can highlight the actor prior to opening the dialog box or make it non-modal
-	FMessageDialog::Open(EAppMsgType::Ok, ActorInfoMsg, Title);
-}
-
 #undef LOCTEXT_NAMESPACE

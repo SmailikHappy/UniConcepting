@@ -77,25 +77,25 @@ void UPointManagerTool::OnPropertyModified(UObject* PropertySet, FProperty* Prop
 	if (PropertySet != Properties) return;
 }
 
-void UPointManagerTool::MouseClick(const FInputDeviceRay& ClickPos)
+void UPointManagerTool::MouseUpdate(const FInputDeviceRay& DevicePos)
 {
-	if (CtrlIsPressed)
-	{
-		ConnectPoints(SelectedPoints.Get(FSetElementId::FromInteger(0)), SelectedPoints.Get(FSetElementId::FromInteger(SelectedPoints.Num() - 1)));
-		return;
-	}
+	FVector WorldPosToDraw;
+	FindRayHit(DevicePos.WorldRay, WorldPosToDraw);
+	DrawDebugPoint(TargetWorld, WorldPosToDraw, 10.0f, MouseIsPressed ? FColor::Blue : FColor::Cyan, false, 0.1f);
+}
 
-	if (ShiftIsPressed)
-	{
-		DeleteSelectedPoints();
-		return;
-	}
+void UPointManagerTool::MouseDragBegin()
+{
+	FVector WorldPosToDraw;
+	FindRayHit(MouseDragBeginRay.WorldRay, WorldPosToDraw);
+	DrawDebugPoint(TargetWorld, WorldPosToDraw, 10.0f, FColor::Green, false, 1.0f);
+}
 
-	USkeletonPoint* ClickedPoint = GetPointFromMousePos(ClickPos);
-	if (ClickedPoint)
-	{
-		SelectPoint(ClickedPoint);
-	}
+void UPointManagerTool::MouseDragEnd()
+{
+	FVector WorldPosToDraw;
+	FindRayHit(MouseDragEndRay.WorldRay, WorldPosToDraw);
+	DrawDebugPoint(TargetWorld, WorldPosToDraw, 10.0f, FColor::Magenta, false, 1.0f);
 }
 
 void UPointManagerTool::RegisterActions(FInteractiveToolActionSet& ActionSet)
