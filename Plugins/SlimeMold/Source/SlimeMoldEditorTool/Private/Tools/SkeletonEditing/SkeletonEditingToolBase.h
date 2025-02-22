@@ -88,9 +88,9 @@ public:
 
 	/** IClickDragBehaviorTarget implementation */
 	FInputRayHit CanBeginClickDragSequence(const FInputDeviceRay& PressPos) override { return MouseHittingWorld(PressPos); };
-	void OnClickPress(const FInputDeviceRay& PressPos) override { MouseDragBeginRay = PressPos; MouseIsPressed = true; MouseDragBegin(); };
+	void OnClickPress(const FInputDeviceRay& PressPos) override { MouseRayWhenPressed = PressPos; MouseIsPressed = true; MousePressed(); };
 	void OnClickDrag(const FInputDeviceRay& DragPos) override { MouseUpdate(DragPos); };
-	void OnClickRelease(const FInputDeviceRay& ReleasePos) override { MouseDragEndRay = ReleasePos; MouseIsPressed = false; MouseDragEnd(); };
+	void OnClickRelease(const FInputDeviceRay& ReleasePos) override { MouseRayWhenReleased = ReleasePos; MouseIsPressed = false; MouseReleased(); };
 	void OnTerminateDragSequence() override {};
 
 protected:
@@ -100,8 +100,8 @@ protected:
 
 	/** Virtual functions for child classes */
 	virtual void MouseUpdate(const FInputDeviceRay& DevicePos) {};
-	virtual void MouseDragBegin() {};
-	virtual void MouseDragEnd() {};
+	virtual void MousePressed() {};
+	virtual void MouseReleased() {};
 
 	
 	/** Protected functions available in base */
@@ -132,8 +132,8 @@ protected:
 	bool ShiftIsPressed = false;
 	bool CtrlIsPressed = false;
 	bool MouseIsPressed = false;
-	FInputDeviceRay MouseDragBeginRay;
-	FInputDeviceRay MouseDragEndRay;
+	FInputDeviceRay MouseRayWhenPressed;
+	FInputDeviceRay MouseRayWhenReleased;
 
 	UWorld* TargetWorld = nullptr;
 	ASlimeMoldBase* TargetSlimeMoldActor = nullptr;

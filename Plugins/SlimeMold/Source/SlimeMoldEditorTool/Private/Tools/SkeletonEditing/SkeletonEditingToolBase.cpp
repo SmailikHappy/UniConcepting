@@ -28,14 +28,6 @@ void USkeletonEditingToolBase::Setup()
 {
 	UInteractiveTool::Setup();
 
-	// Add default mouse input behavior
-	//USingleClickInputBehavior* SingleClickBehavior = NewObject<USingleClickInputBehavior>();
-	//SingleClickBehavior->Initialize(this);
-	//AddInputBehavior(SingleClickBehavior);
-
-	//SingleClickBehavior->Modifiers.RegisterModifier(1, FInputDeviceState::IsShiftKeyDown);
-	//SingleClickBehavior->Modifiers.RegisterModifier(2, FInputDeviceState::IsCtrlKeyDown);
-
 	UMouseHoverBehavior* HoverBehavior = NewObject<UMouseHoverBehavior>();
 	HoverBehavior->Initialize(this);
 	AddInputBehavior(HoverBehavior);

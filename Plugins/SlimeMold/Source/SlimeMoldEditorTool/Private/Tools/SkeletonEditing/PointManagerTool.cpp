@@ -9,6 +9,7 @@
 #include "CollisionQueryParams.h"
 #include "Engine/World.h"
 
+#include "LevelEditorViewport.h"
 
 #include "SlimeMoldEditorToolFunctionLibrary.h"
 
@@ -84,34 +85,28 @@ void UPointManagerTool::MouseUpdate(const FInputDeviceRay& DevicePos)
 	DrawDebugPoint(TargetWorld, WorldPosToDraw, 10.0f, MouseIsPressed ? FColor::Blue : FColor::Cyan, false, 0.1f);
 }
 
-void UPointManagerTool::MouseDragBegin()
+void UPointManagerTool::MousePressed()
 {
 	FVector WorldPosToDraw;
-	FindRayHit(MouseDragBeginRay.WorldRay, WorldPosToDraw);
+	FindRayHit(MouseRayWhenPressed.WorldRay, WorldPosToDraw);
 	DrawDebugPoint(TargetWorld, WorldPosToDraw, 10.0f, FColor::Green, false, 1.0f);
+
+	FMinimalViewInfo CameraView;
+	FLevelEditorViewportClient* client = (FLevelEditorViewportClient*)GEditor->GetActiveViewport()->GetClient();
+	client->GetCameraComponentForView()->GetCameraView(0, CameraView);
+
+	auto lol = CameraView.CalculateProjectionMatrix().TransformFVector4(FVector4(TargetSlimeMoldActor->SkeletonPoints[0]->WorldPos));
+
+
+
+	UE_LOG(LogTemp, Warning, TEXT("%s"), *lol.ToString());
 }
 
-void UPointManagerTool::MouseDragEnd()
+void UPointManagerTool::MouseReleased()
 {
 	FVector WorldPosToDraw;
-	FindRayHit(MouseDragEndRay.WorldRay, WorldPosToDraw);
+	FindRayHit(MouseRayWhenReleased.WorldRay, WorldPosToDraw);
 	DrawDebugPoint(TargetWorld, WorldPosToDraw, 10.0f, FColor::Magenta, false, 1.0f);
-}
-
-void UPointManagerTool::RegisterActions(FInteractiveToolActionSet& ActionSet)
-{
-	ActionSet.RegisterAction(
-		this,
-		(int32)EStandardToolActions::BaseClientDefinedActionID + 61,
-		TEXT("Action1"),
-		LOCTEXT("Action1Key", "Action 1 SUIN"),
-		LOCTEXT("Action1Desc", "Action 1 description"),
-		EModifierKey::None,
-		EKeys::W,
-		[this]() { Msg("Action 1 executed"); }
-	);
-
-	UE_LOG(LogTemp, Warning, TEXT("actions registered"));
 }
 
 void UPointManagerTool::CreatePoint(const FInputDeviceRay& ClickPos)

@@ -41,15 +41,13 @@ public:
 	virtual void Shutdown(EToolShutdownType ShutdownType) override;
 	virtual void OnPropertyModified(UObject* PropertySet, FProperty* Property) override;
 
-
-	virtual void RegisterActions(FInteractiveToolActionSet& ActionSet) override;
 protected:
 
 	/** USkeletonEditingToolBase overrides */
-	void MouseClick(const FInputDeviceRay& ClickPos);
+	//void MouseClick(const FInputDeviceRay& ClickPos);
 	void MouseUpdate(const FInputDeviceRay& DevicePos);
-	void MouseDragBegin();
-	void MouseDragEnd();
+	void MousePressed();
+	void MouseReleased();
 
 
 	void CreatePoint(const FInputDeviceRay& ClickPos);
