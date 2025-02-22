@@ -5,6 +5,8 @@
 #include "ToolBuilderUtil.h"
 #include "BaseBehaviors/SingleClickBehavior.h"
 
+#include "Subsystems/UnrealEditorSubsystem.h"
+
 // for raycast into World
 #include "CollisionQueryParams.h"
 #include "Engine/World.h"
@@ -86,20 +88,38 @@ void UPointManagerTool::MouseUpdate(const FInputDeviceRay& DevicePos)
 }
 
 void UPointManagerTool::MousePressed()
-{
+{/*
+	FVector CameraLocation;
+	FRotator CameraRotation;
+	GEditor->GetEditorSubsystem<UUnrealEditorSubsystem>()->GetLevelViewportCameraInfo(CameraLocation, CameraRotation);*/
+
+
+	FEditorViewportClient* client = (FEditorViewportClient*)GEditor->GetActiveViewport()->GetClient();
+	FVector CameraRotation = client->GetViewRotation().Vector();
+	FVector CameraLocation = client->GetViewLocation();
+
+
+	float dotProductK = FVector::DotProduct(CameraRotation, MouseRayWhenPressed.WorldRay.Direction);
+	UE_LOG(LogTemp, Warning, TEXT("%f"), dotProductK);
+
+	bool lol = false;
+	for (USkeletonPoint* Point : TargetSlimeMoldActor->SkeletonPoints)
+	{
+		FVector DirectionToPoint = Point->WorldPos - CameraLocation;
+		DirectionToPoint.Normalize();
+
+		float OneMinusDotProduct = 1.0f - FVector::DotProduct(DirectionToPoint, MouseRayWhenPressed.WorldRay.Direction);
+
+		if (OneMinusDotProduct / (dotProductK*dotProductK*dotProductK) < 0.002f)
+		{
+			lol = true;
+			break;
+		}
+	}
+
 	FVector WorldPosToDraw;
 	FindRayHit(MouseRayWhenPressed.WorldRay, WorldPosToDraw);
-	DrawDebugPoint(TargetWorld, WorldPosToDraw, 10.0f, FColor::Green, false, 1.0f);
-
-	FMinimalViewInfo CameraView;
-	FLevelEditorViewportClient* client = (FLevelEditorViewportClient*)GEditor->GetActiveViewport()->GetClient();
-	client->GetCameraComponentForView()->GetCameraView(0, CameraView);
-
-	auto lol = CameraView.CalculateProjectionMatrix().TransformFVector4(FVector4(TargetSlimeMoldActor->SkeletonPoints[0]->WorldPos));
-
-
-
-	UE_LOG(LogTemp, Warning, TEXT("%s"), *lol.ToString());
+	DrawDebugPoint(TargetWorld, WorldPosToDraw, 10.0f, lol ? FColor::Green : FColor::Black, false, 1.0f);
 }
 
 void UPointManagerTool::MouseReleased()
