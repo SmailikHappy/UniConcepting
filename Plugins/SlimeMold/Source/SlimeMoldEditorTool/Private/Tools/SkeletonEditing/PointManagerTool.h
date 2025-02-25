@@ -49,8 +49,19 @@ protected:
 	void MousePressed();
 	void MouseReleased();
 
+	TSet<USkeletonPoint*> GetPointsInMouseRegion(const FInputDeviceRay& DevicePos, float RayRadiusCoefficent);
+	USkeletonPoint* GetClosestPointToMouse(const FInputDeviceRay& DevicePos, TSet<USkeletonPoint*>& SetOfPoints);
 
-	void CreatePoint(const FInputDeviceRay& ClickPos);
+	void DrawDebugMouseInfo(const FInputDeviceRay& DevicePos, FColor Color);
+
+	const float MouseRadiusCoefficent = 0.002f;
+	bool bDrawDebugMouseInfo = false;
+
+	USkeletonPoint* CreatePoint(const FInputDeviceRay& ClickPos);
 	void Msg(const FString& Msg);
 
+
+protected:
+	// Extra mouse variables
+	bool bSingleClickSelectSuccess = false;
 };

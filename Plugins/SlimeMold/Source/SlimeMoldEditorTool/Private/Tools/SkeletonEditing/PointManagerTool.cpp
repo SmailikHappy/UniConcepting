@@ -82,54 +82,190 @@ void UPointManagerTool::OnPropertyModified(UObject* PropertySet, FProperty* Prop
 
 void UPointManagerTool::MouseUpdate(const FInputDeviceRay& DevicePos)
 {
-	FVector WorldPosToDraw;
-	FindRayHit(DevicePos.WorldRay, WorldPosToDraw);
-	DrawDebugPoint(TargetWorld, WorldPosToDraw, 10.0f, MouseIsPressed ? FColor::Blue : FColor::Cyan, false, 0.1f);
+	DrawDebugMouseInfo(DevicePos, MouseIsPressed ? FColor::Blue : FColor::Cyan);
+	bDrawGhostPoint = false;
+	bDrawGhostLines = false;
+
+	// When is dragged, select points
+	if (MouseIsPressed && !ShiftIsPressed && !CtrlIsPressed)
+	{
+		TSet<USkeletonPoint*> PointsInRegion = GetPointsInMouseRegion(DevicePos, MouseRadiusCoefficent);
+
+		for (USkeletonPoint* Point : PointsInRegion)
+		{
+			SelectPoint(Point);
+		}
+	}
+
+	// When hovered with Ctrl, draw ghost point (to be placed)
+	if (!MouseIsPressed && !ShiftIsPressed && CtrlIsPressed)
+	{
+		bDrawGhostPoint = true;
+
+		FindRayHit(DevicePos.WorldRay, GhostPoint->WorldPos);
+	}
+
+	// When hovered with Shift, draw ghost connection line (to be connected)
+	if (!MouseIsPressed && ShiftIsPressed && !CtrlIsPressed)
+	{
+		TSet<USkeletonPoint*> PointsInRegion = GetPointsInMouseRegion(DevicePos, MouseRadiusCoefficent);
+
+		if (!PointsInRegion.IsEmpty())
+		{
+			bDrawGhostLines = true;
+			USkeletonPoint* ClosestPoint = GetClosestPointToMouse(DevicePos, PointsInRegion);
+			if (ClosestPoint)
+			{
+				// Just copy data, do not replace the GhostPoint pointer
+				GhostPoint->WorldPos = ClosestPoint->WorldPos;
+				GhostPoint->WorldNormal = ClosestPoint->WorldNormal;
+			}
+		}
+	}
 }
 
 void UPointManagerTool::MousePressed()
-{/*
-	FVector CameraLocation;
-	FRotator CameraRotation;
-	GEditor->GetEditorSubsystem<UUnrealEditorSubsystem>()->GetLevelViewportCameraInfo(CameraLocation, CameraRotation);*/
+{
+	DrawDebugMouseInfo(MouseRayWhenPressed, FColor::Green);
 
+	// If no modifier is pressed, select the closest point
+	// If no points was found, deselect all points
+	if (!ShiftIsPressed && !CtrlIsPressed)
+	{
+		TSet<USkeletonPoint*> PointsInRegion = GetPointsInMouseRegion(MouseRayWhenPressed, MouseRadiusCoefficent);
+
+		bSingleClickSelectSuccess = false;
+		if (!PointsInRegion.IsEmpty())
+		{
+			USkeletonPoint* ClosestPoint = GetClosestPointToMouse(MouseRayWhenPressed, PointsInRegion);
+			SelectPoint(ClosestPoint);
+			bSingleClickSelectSuccess = true;
+		}
+	}
+
+	//// Shift click is a only a single Point selection
+	//if (ShiftIsPressed && !CtrlIsPressed)
+	//{
+	//	TSet<USkeletonPoint*> PointsInRegion = GetPointsInMouseRegion(MouseRayWhenPressed, MouseRadiusCoefficent);
+	//	
+	//	USkeletonPoint* ClosestPoint = GetClosestPointToMouse(MouseRayWhenPressed, PointsInRegion);
+
+	//	if (ClosestPoint)
+	//	{
+	//		SelectPoint(ClosestPoint);
+	//	}
+
+	//	// The user at tried to select something, and it is not a drag operation and anyway
+	//	bLastMouseDragSelectedSomething = true;
+	//}
+
+	// When click & Ctrl, create a new point (and automatically connect it to all the selected ones)
+	if (!ShiftIsPressed && CtrlIsPressed)
+	{
+		USkeletonPoint* NewPoint = CreatePoint(MouseRayWhenPressed);
+
+		if (bConnectGhostAndSelectedPoints)
+		{
+			for (USkeletonPoint* Point : SelectedPoints)
+			{
+				ConnectPoints(Point, NewPoint);
+			}
+		}
+	}
+
+	// When click & Shift, make ghost connections real (connect selected points with the closest one)
+	if (ShiftIsPressed && !CtrlIsPressed)
+	{
+		TSet<USkeletonPoint*> PointsInRegion = GetPointsInMouseRegion(MouseRayWhenPressed, MouseRadiusCoefficent);
+
+		if (!PointsInRegion.IsEmpty())
+		{
+			bDrawGhostLines = true;
+			USkeletonPoint* ClosestPoint = GetClosestPointToMouse(MouseRayWhenPressed, PointsInRegion);
+			if (ClosestPoint)
+			{
+				for (USkeletonPoint* Point : SelectedPoints)
+				{
+					ConnectPoints(Point, ClosestPoint);
+				}
+			}
+		}
+	}
+}
+
+void UPointManagerTool::MouseReleased()
+{
+	DrawDebugMouseInfo(MouseRayWhenReleased, FColor::Magenta);
+
+	// Deselect all points if mouse did not move and did not selected anything
+	if (!ShiftIsPressed && !CtrlIsPressed)
+	{
+		if (MouseRayWhenPressed.WorldRay.Direction == MouseRayWhenReleased.WorldRay.Direction
+			&& !bSingleClickSelectSuccess)
+		{
+			// If the mouse was not dragged, deselect all points
+			DeselectAllPoints();
+		}
+	}
+}
+
+TSet<USkeletonPoint*> UPointManagerTool::GetPointsInMouseRegion(const FInputDeviceRay& DevicePos, float RayRadiusCoefficent)
+{
+	TSet<USkeletonPoint*> PointsInRegion;
 
 	FEditorViewportClient* client = (FEditorViewportClient*)GEditor->GetActiveViewport()->GetClient();
 	FVector CameraRotation = client->GetViewRotation().Vector();
 	FVector CameraLocation = client->GetViewLocation();
 
+	float dotProductK = FVector::DotProduct(CameraRotation, DevicePos.WorldRay.Direction);
 
-	float dotProductK = FVector::DotProduct(CameraRotation, MouseRayWhenPressed.WorldRay.Direction);
-	UE_LOG(LogTemp, Warning, TEXT("%f"), dotProductK);
-
-	bool lol = false;
 	for (USkeletonPoint* Point : TargetSlimeMoldActor->SkeletonPoints)
 	{
 		FVector DirectionToPoint = Point->WorldPos - CameraLocation;
 		DirectionToPoint.Normalize();
 
-		float OneMinusDotProduct = 1.0f - FVector::DotProduct(DirectionToPoint, MouseRayWhenPressed.WorldRay.Direction);
+		float OneMinusDotProduct = 1.0f - FVector::DotProduct(DirectionToPoint, DevicePos.WorldRay.Direction);
 
-		if (OneMinusDotProduct / (dotProductK*dotProductK*dotProductK) < 0.002f)
+		if (OneMinusDotProduct / (dotProductK * dotProductK * dotProductK) < RayRadiusCoefficent)
 		{
-			lol = true;
-			break;
+			PointsInRegion.Add(Point);
 		}
 	}
 
-	FVector WorldPosToDraw;
-	FindRayHit(MouseRayWhenPressed.WorldRay, WorldPosToDraw);
-	DrawDebugPoint(TargetWorld, WorldPosToDraw, 10.0f, lol ? FColor::Green : FColor::Black, false, 1.0f);
+	return PointsInRegion;
 }
 
-void UPointManagerTool::MouseReleased()
+USkeletonPoint* UPointManagerTool::GetClosestPointToMouse(const FInputDeviceRay& DevicePos, TSet<USkeletonPoint*>& SetOfPoints)
 {
-	FVector WorldPosToDraw;
-	FindRayHit(MouseRayWhenReleased.WorldRay, WorldPosToDraw);
-	DrawDebugPoint(TargetWorld, WorldPosToDraw, 10.0f, FColor::Magenta, false, 1.0f);
+	// The closest point is the one with biggest dot product
+	USkeletonPoint* ClosestPoint = nullptr;
+	float MinDotProduct = 0.0f;
+
+	for (USkeletonPoint* Point : SetOfPoints)
+	{
+		FVector DirectionToPoint = Point->WorldPos - MouseRayWhenPressed.WorldRay.Origin;
+		DirectionToPoint.Normalize();
+		float DotProduct = FVector::DotProduct(DirectionToPoint, MouseRayWhenPressed.WorldRay.Direction);
+		if (DotProduct > MinDotProduct)
+		{
+			MinDotProduct = DotProduct;
+			ClosestPoint = Point;
+		}
+	}
+	 
+	return ClosestPoint;
 }
 
-void UPointManagerTool::CreatePoint(const FInputDeviceRay& ClickPos)
+void UPointManagerTool::DrawDebugMouseInfo(const FInputDeviceRay& DevicePos, FColor Color)
+{
+	if (!bDrawDebugMouseInfo) return;
+
+	FVector WorldPosToDraw;
+	FindRayHit(DevicePos.WorldRay, WorldPosToDraw);
+	DrawDebugPoint(TargetWorld, WorldPosToDraw, 10.0f, Color, false, 0.1f);
+}
+
+USkeletonPoint* UPointManagerTool::CreatePoint(const FInputDeviceRay& ClickPos)
 {
 	FCollisionObjectQueryParams QueryParams(FCollisionObjectQueryParams::AllObjects);
 	FHitResult Result;
@@ -142,8 +278,11 @@ void UPointManagerTool::CreatePoint(const FInputDeviceRay& ClickPos)
 		NewPoint->WorldPos = Result.Location;
 		NewPoint->WorldNormal = Result.ImpactNormal;
 		TargetSlimeMoldActor->SkeletonPoints.Add(NewPoint);
-		SelectPoint(NewPoint);
+
+		return NewPoint;
 	}
+
+	return nullptr;
 }
 
 void UPointManagerTool::Msg(const FString& Msg)
@@ -154,5 +293,7 @@ void UPointManagerTool::Msg(const FString& Msg)
 
 	UE_LOG(LogTemp, Warning, TEXT("some text lol"));
 }
+
+
 
 #undef LOCTEXT_NAMESPACE

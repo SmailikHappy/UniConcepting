@@ -29,7 +29,7 @@ void USkeletonEditingToolBase::Setup()
 	UInteractiveTool::Setup();
 
 	UMouseHoverBehavior* HoverBehavior = NewObject<UMouseHoverBehavior>();
-	HoverBehavior->Initialize(this);
+	HoverBehavior->Initialize(this); 
 	AddInputBehavior(HoverBehavior);
 
 	UClickDragInputBehavior* ClickDragBehavior = NewObject<UClickDragInputBehavior>();
@@ -40,6 +40,8 @@ void USkeletonEditingToolBase::Setup()
 	HoverBehavior->Modifiers.RegisterModifier(2, FInputDeviceState::IsCtrlKeyDown);
 
 	CreateGizmo();
+
+	GhostPoint = NewObject<USkeletonPoint>();
 }
 
 void USkeletonEditingToolBase::SetWorld(UWorld* World)
@@ -266,9 +268,32 @@ void USkeletonEditingToolBase::Render(IToolsContextRenderAPI* RenderAPI)
 {
 	if (TargetSlimeMoldActor)
 	{
-		// Render the skeleton with debug view
 		FPrimitiveDrawInterface* PDI = RenderAPI->GetPrimitiveDrawInterface();
+		
+		if (bDrawGhostPoint) 
+		{
+			PDI->DrawPoint(GhostPoint->WorldPos, FLinearColor(1.0f, 0.2f, 1.0f, 1.0f), Properties->DebugPointSize, SDPG_Foreground);
 
+			if (bConnectGhostAndSelectedPoints)
+			{
+				for (USkeletonPoint* Point : SelectedPoints)
+				{
+					PDI->DrawLine(Point->WorldPos, GhostPoint->WorldPos,
+						FLinearColor(1.0f, .5f, .5f, 1.0f), SDPG_Foreground, Properties->DebugLineThickness);
+				}
+			}
+		}
+
+		if (bDrawGhostLines)
+		{
+			for (USkeletonPoint* Point : SelectedPoints)
+			{
+				PDI->DrawLine(Point->WorldPos, GhostPoint->WorldPos,
+					FLinearColor(1.0f, .5f, .5f, 1.0f), SDPG_Foreground, Properties->DebugLineThickness);
+			}
+		}
+
+		// Render the skeleton with debug view
 		for (const FSkeletonLine& Line : TargetSlimeMoldActor->SkeletonLines)
 		{
 			PDI->DrawLine(Line.Point1->WorldPos, Line.Point2->WorldPos,
@@ -281,6 +306,7 @@ void USkeletonEditingToolBase::Render(IToolsContextRenderAPI* RenderAPI)
 
 			PDI->DrawPoint(Point->WorldPos, PointColor, Properties->DebugPointSize, SDPG_Foreground);
 		}
+
 	}
 }
 

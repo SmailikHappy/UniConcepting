@@ -129,13 +129,23 @@ private:
 
 protected:
 
+	// Variable updates only when the mouse is not pressed
 	bool ShiftIsPressed = false;
+	// Variable updates only when the mouse is not pressed
 	bool CtrlIsPressed = false;
+
 	bool MouseIsPressed = false;
+	
 	FInputDeviceRay MouseRayWhenPressed;
 	FInputDeviceRay MouseRayWhenReleased;
 
 	UWorld* TargetWorld = nullptr;
 	ASlimeMoldBase* TargetSlimeMoldActor = nullptr;
 	TSet<USkeletonPoint*> SelectedPoints;		// set ensures no duplicates
+	 
+	bool bDrawGhostPoint = false;
+	bool bDrawGhostLines = false;
+	USkeletonPoint* GhostPoint;		// A ghost point that is not yet placed but is being shown where it could be placed OR
+									// A ghost connection with that Point, shown where new Lines might appear
+	bool bConnectGhostAndSelectedPoints = true;
 };
