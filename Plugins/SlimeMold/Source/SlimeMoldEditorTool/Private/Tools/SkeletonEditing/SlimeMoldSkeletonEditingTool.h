@@ -14,27 +14,36 @@
 // Adding gizmo to the world
 #include "BaseGizmos/TransformGizmoUtil.h"
 #include "InteractiveToolObjects.h"
+#include "InteractiveToolBuilder.h"
 
-// Buttons in detail panel
-#include "Components/Button.h"
 
-#include "SkeletonEditingToolBase.generated.h"
+
+#include "SlimeMoldSkeletonEditingTool.generated.h"
 
 /**
- * This class should not have any Tool Builder
+ * This is a Tool Builder for our skeleton editor
  */
+UCLASS()
+class SLIMEMOLDEDITORTOOL_API USlimeMoldSkeletonEditingToolBuilder : public UInteractiveToolBuilder
+{
+	GENERATED_BODY()
+
+public:
+	virtual bool CanBuildTool(const FToolBuilderState& SceneState) const override;
+	virtual UInteractiveTool* BuildTool(const FToolBuilderState& SceneState) const override;
+};
 
 
 /**
  * Property set for every child tool
  */
 UCLASS(Config = EditorPerProjectUserSettings)
-class SLIMEMOLDEDITORTOOL_API USkeletonEditingToolBaseProperties : public UInteractiveToolPropertySet
+class SLIMEMOLDEDITORTOOL_API USlimeMoldSkeletonEditingToolProperties : public UInteractiveToolPropertySet
 {
 	GENERATED_BODY()
 
 public:
-	USkeletonEditingToolBaseProperties() {}
+	USlimeMoldSkeletonEditingToolProperties() {}
 
 	UPROPERTY(EditAnywhere, Category = "yikyyy")
 	int into;
@@ -75,7 +84,7 @@ public:
  * Tool logic
  */
 UCLASS()
-class SLIMEMOLDEDITORTOOL_API USkeletonEditingToolBase : public UInteractiveTool, public IHoverBehaviorTarget, public IClickDragBehaviorTarget
+class SLIMEMOLDEDITORTOOL_API USlimeMoldSkeletonEditingTool : public UInteractiveTool, public IHoverBehaviorTarget, public IClickDragBehaviorTarget
 {
 	GENERATED_BODY()
 
@@ -83,10 +92,10 @@ public:
 	virtual void SetWorld(UWorld* World);
 
 	/** UInteractiveTool overrides */
-	virtual void Setup() override;
-	virtual void OnPropertyModified(UObject* PropertySet, FProperty* Property) override;
-	virtual void Shutdown(EToolShutdownType ShutdownType) override;
-	virtual void Render(IToolsContextRenderAPI* RenderAPI) override;
+	void Setup() override;
+	void OnPropertyModified(UObject* PropertySet, FProperty* Property) override;
+	void Shutdown(EToolShutdownType ShutdownType) override;
+	void Render(IToolsContextRenderAPI* RenderAPI) override;
 
 
 	/** IModifierToggleBehaviorTarget implementation */
@@ -108,15 +117,17 @@ public:
 protected:
 	/** Properties of the tool are stored here */
 	UPROPERTY()
-	TObjectPtr<USkeletonEditingToolBaseProperties> Properties;
+	TObjectPtr<USlimeMoldSkeletonEditingToolProperties> Properties;
 
-	/** Virtual functions for child classes */
-	virtual void MouseUpdate(const FInputDeviceRay& DevicePos) {};
-	virtual void MousePressed() {};
-	virtual void MouseReleased() {};
+	/** Mouse controls */
+	void MousePressed();
+	void MouseUpdate(const FInputDeviceRay& DevicePos);
+	void MouseReleased();
 
+	/** Debug draw mouse */
+	void DrawDebugMouseInfo(const FInputDeviceRay& DevicePos, FColor Color);
 	
-	/** Protected functions available in base */
+	/** Skeleton managing functions */
 	void AssignProperties();
 	void SelectPoint(USkeletonPoint* Point);
 	void DeselectPoint(USkeletonPoint* Point);
@@ -125,15 +136,28 @@ protected:
 	void ConnectPoints(USkeletonPoint* Point1, USkeletonPoint* Point2);
 	void DisconnectPoints(USkeletonPoint* Point1, USkeletonPoint* Point2);
 	void DisconnectSelectedPoints();
-	TArray<FSkeletonLine> GetSelectedLines();
 	void SplitLine(FSkeletonLine line);
-	USkeletonPoint* GetPointFromMousePos(const FInputDeviceRay& ClickPos);
 
+
+
+	const float MouseRadiusCoefficent = 0.002f;
+	bool bDrawDebugMouseInfo = false;
+
+
+	/** Helper functions */
+	TArray<FSkeletonLine> GetSelectedLines();
+	TSet<USkeletonPoint*> GetPointsInMouseRegion(const FInputDeviceRay& DevicePos, float RayRadiusCoefficent);
+	USkeletonPoint* GetClosestPointToMouse(const FInputDeviceRay& DevicePos, TSet<USkeletonPoint*>& SetOfPoints);
 	FInputRayHit FindRayHit(const FRay& WorldRay, FVector& HitPos);
+
+	USkeletonPoint* CreatePoint(const FInputDeviceRay& ClickPos);
+	void Msg(const FString& Msg);
 
 private:
 	/** Utility functions */
 	FInputRayHit MouseHittingWorld(const FInputDeviceRay& ClickPos);
+	
+	/** Gizmo functionality */
 	void ShowGizmo(const FTransform& IntialTransform);
 	void HideGizmo();
 	void CreateGizmo();
@@ -151,6 +175,7 @@ protected:
 
 	bool MouseIsPressed = false;
 	
+
 	FInputDeviceRay MouseRayWhenPressed;
 	FInputDeviceRay MouseRayWhenReleased;
 
@@ -161,6 +186,6 @@ protected:
 	bool bDrawGhostPoint = false;
 	bool bDrawGhostLines = false;
 	USkeletonPoint* GhostPoint;		// A ghost point that is not yet placed but is being shown where it could be placed OR
-									// A ghost connection with that Point, shown where new Lines might appear
+									// A ghost connection with selected and ghost-Point, shown where new Lines might appear
 	bool bConnectGhostAndSelectedPoints = true;
 };

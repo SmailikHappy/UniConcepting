@@ -20,17 +20,17 @@ void FSlimeMoldEditorToolModeCommands::RegisterCommands()
 {
 	TArray<TSharedPtr<FUICommandInfo>>& ToolCommands = Commands.FindOrAdd(NAME_Default);
 
-	UI_COMMAND(InteractiveTool, "Measure distance", "Measures distance between 2 points (click to set the origin, shift-click to set the end-point)", EUserInterfaceActionType::ToggleButton, FInputChord());
-	ToolCommands.Add(InteractiveTool);
+	/*UI_COMMAND(InteractiveTool, "Measure distance", "Measures distance between 2 points (click to set the origin, shift-click to set the end-point)", EUserInterfaceActionType::ToggleButton, FInputChord());
+	ToolCommands.Add(InteractiveTool);*/
 
-	UI_COMMAND(ExampleTool, "Example Tool", "An example tool that does nothing", EUserInterfaceActionType::ToggleButton, FInputChord());
-	ToolCommands.Add(ExampleTool);
+	//UI_COMMAND(ExampleTool, "Example Tool", "An example tool that does nothing", EUserInterfaceActionType::ToggleButton, FInputChord());
+	//ToolCommands.Add(ExampleTool);
 
-	UI_COMMAND(PointManagerTool, "Point Manager Tool", "This tool manages points", EUserInterfaceActionType::ToggleButton, FInputChord());
-	ToolCommands.Add(PointManagerTool);
+	UI_COMMAND(SkeletonEditingTool, "Skeleton", "This tool manages the skeleton of the goop", EUserInterfaceActionType::ToggleButton, FInputChord());
+	ToolCommands.Add(SkeletonEditingTool);
 
-	UI_COMMAND(LineManagerTool, "Line Manager Tool", "This tool manages lines", EUserInterfaceActionType::ToggleButton, FInputChord());
-	ToolCommands.Add(LineManagerTool);
+	/*UI_COMMAND(LineManagerTool, "Line Manager Tool", "This tool manages lines", EUserInterfaceActionType::ToggleButton, FInputChord());
+	ToolCommands.Add(LineManagerTool);*/
 }
 
 TMap<FName, TArray<TSharedPtr<FUICommandInfo>>> FSlimeMoldEditorToolModeCommands::GetCommands()

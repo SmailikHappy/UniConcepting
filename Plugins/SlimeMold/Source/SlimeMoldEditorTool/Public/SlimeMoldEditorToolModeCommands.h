@@ -17,10 +17,10 @@ public:
 	static TMap<FName, TArray<TSharedPtr<FUICommandInfo>>> GetCommands();
 
 
-	TSharedPtr<FUICommandInfo> InteractiveTool;
-	TSharedPtr<FUICommandInfo> ExampleTool;
-	TSharedPtr<FUICommandInfo> PointManagerTool;
-	TSharedPtr<FUICommandInfo> LineManagerTool;
+	//TSharedPtr<FUICommandInfo> InteractiveTool;
+	//TSharedPtr<FUICommandInfo> ExampleTool;
+	TSharedPtr<FUICommandInfo> SkeletonEditingTool;
+	//TSharedPtr<FUICommandInfo> LineManagerTool;
 
 protected:
 	TMap<FName, TArray<TSharedPtr<FUICommandInfo>>> Commands;
