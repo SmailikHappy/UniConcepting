@@ -175,6 +175,60 @@ void USkeletonEditingToolBase::DisconnectPoints(USkeletonPoint* Point1, USkeleto
 	}
 }
 
+void USkeletonEditingToolBase::DisconnectSelectedPoints()
+{
+	// UNOPTIMIZED -> Check on speeds
+	for (USkeletonPoint* Point1 : SelectedPoints)
+	{
+		for (USkeletonPoint* Point2 : SelectedPoints)
+		{
+			if (Point1 != Point2)
+			{
+				DisconnectPoints(Point1, Point2);
+			}
+		}
+	}
+}
+
+TArray<FSkeletonLine> USkeletonEditingToolBase::GetSelectedLines()
+{
+	TArray<FSkeletonLine> LineArray;
+
+	for (FSkeletonLine& Line : TargetSlimeMoldActor->SkeletonLines)
+	{
+		if (SelectedPoints.Contains(Line.Point1) && SelectedPoints.Contains(Line.Point2))
+		{
+			LineArray.Add(Line);
+		}
+	}
+
+	return LineArray;
+}
+
+void USkeletonEditingToolBase::SplitLine(FSkeletonLine line)
+{
+	// Create a new point in the middle of the line
+	USkeletonPoint* NewPoint = NewObject<USkeletonPoint>(TargetSlimeMoldActor);
+	NewPoint->WorldPos = (line.Point1->WorldPos + line.Point2->WorldPos) / 2.0f;
+	NewPoint->WorldNormal = (line.Point1->WorldNormal + line.Point2->WorldNormal) / 2.0f;
+
+	TargetSlimeMoldActor->SkeletonPoints.Add(NewPoint);
+
+	// Create two new lines
+	FSkeletonLine NewLine1;
+	NewLine1.Point1 = line.Point1;
+	NewLine1.Point2 = NewPoint;
+	TargetSlimeMoldActor->SkeletonLines.Add(NewLine1);
+
+	FSkeletonLine NewLine2;
+	NewLine2.Point1 = NewPoint;
+	NewLine2.Point2 = line.Point2;
+	TargetSlimeMoldActor->SkeletonLines.Add(NewLine2);
+
+	// Remove the old line
+	TargetSlimeMoldActor->SkeletonLines.Remove(line);
+}
+
 USkeletonPoint* USkeletonEditingToolBase::GetPointFromMousePos(const FInputDeviceRay& ClickPos)
 {
 	FVector HitPos;

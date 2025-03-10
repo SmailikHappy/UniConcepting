@@ -32,4 +32,10 @@ struct SLIMEMOLD_API FSkeletonLine
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	USkeletonPoint* Point2 = nullptr;
+
+	bool operator==(const FSkeletonLine& Other) const
+	{
+		return (this->Point1 == Other.Point1 && this->Point2 == Other.Point2)
+			|| (this->Point1 == Other.Point2 && this->Point2 == Other.Point1);
+	}
 }; 

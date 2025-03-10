@@ -40,17 +40,33 @@ public:
 	int into;
 
 
-	/** Please add a variable description */
+	/** Debug draw lines */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Default")
 	float DebugLineThickness = 2.0f;
 
-	/** Please add a variable description */
+	/** Debug draw points */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Default")
 	float DebugPointSize = 10.0f;
 
-	/** Please add a variable description */
+	/** Mouse 'radius' point detection threshlod */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Default")
-	float SelectionMaxRadiusThreshold;
+	float SelectionMaxRadiusThreshold = 1.0f;
+
+	/** Variable listener TO REDO */
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Default")
+	bool bDeletePoints;
+
+	/** Variable listener TO REDO*/
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Default")
+	bool bDisconnectPoints;
+
+	/** Variable listener TO REDO */
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Default")
+	bool bSplitLineInMid;
+
+	/** Decides whether we shall change the selection to just created point (deselect all the points that were selected THEN select only the point that was just created) */
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Default")
+	bool bChangeSelectionOnPointCreate = true;
 };
 
 
@@ -72,10 +88,6 @@ public:
 	virtual void Shutdown(EToolShutdownType ShutdownType) override;
 	virtual void Render(IToolsContextRenderAPI* RenderAPI) override;
 
-
-	/** IClickBehaviorTarget implementation */
-	//virtual FInputRayHit IsHitByClick(const FInputDeviceRay& ClickPos) override;
-	//virtual void OnClicked(const FInputDeviceRay& ClickPos) override;
 
 	/** IModifierToggleBehaviorTarget implementation */
 	void OnUpdateModifierState(int ModifierID, bool bIsOn) override; 
@@ -112,6 +124,9 @@ protected:
 	void DeleteSelectedPoints();
 	void ConnectPoints(USkeletonPoint* Point1, USkeletonPoint* Point2);
 	void DisconnectPoints(USkeletonPoint* Point1, USkeletonPoint* Point2);
+	void DisconnectSelectedPoints();
+	TArray<FSkeletonLine> GetSelectedLines();
+	void SplitLine(FSkeletonLine line);
 	USkeletonPoint* GetPointFromMousePos(const FInputDeviceRay& ClickPos);
 
 	FInputRayHit FindRayHit(const FRay& WorldRay, FVector& HitPos);
