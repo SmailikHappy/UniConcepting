@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "InteractiveToolObjects.h"
 #include "Structs.h"
 
 #include "SlimeMoldBase.generated.h"
@@ -28,8 +29,8 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	UFUNCTION(BlueprintCallable)
-	virtual void GenerateMesh();
+	UFUNCTION(BlueprintImplementableEvent)
+	void GenerateMesh(UObject* Properties);
 
 	virtual void Tick(float DeltaTime) override;
 };

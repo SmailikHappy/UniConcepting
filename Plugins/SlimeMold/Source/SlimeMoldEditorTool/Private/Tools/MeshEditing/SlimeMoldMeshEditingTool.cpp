@@ -1,6 +1,6 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "MeshEditingToolBase.h"
+#include "SlimeMoldMeshEditingTool.h"
 #include "InteractiveToolManager.h"
 #include "ToolBuilderUtil.h"
 #include "BaseBehaviors/ClickDragBehavior.h"
@@ -12,18 +12,25 @@
 #include "SceneManagement.h"
 #include <Kismet/GameplayStatics.h>
 
+// Custom static functions
+#include "SlimeMoldEditorToolFunctionLibrary.h"
 
 
 // localization namespace
-#define LOCTEXT_NAMESPACE "UMeshEditingToolBase"
+#define LOCTEXT_NAMESPACE "USlimeMoldMeshEditingTool"
 
 /*
  * Tool builder
  */
 
-UInteractiveTool* UMeshEditingToolBaseBuilder::BuildTool(const FToolBuilderState& SceneState) const
+bool USlimeMoldMeshEditingToolBuilder::CanBuildTool(const FToolBuilderState& SceneState) const
 {
-	UMeshEditingToolBase* NewTool = NewObject<UMeshEditingToolBase>(SceneState.ToolManager);
+	return USlimeMoldEditorFuncLib::SingleSlimeMoldObjectIsSelected();
+}
+
+UInteractiveTool* USlimeMoldMeshEditingToolBuilder::BuildTool(const FToolBuilderState& SceneState) const
+{
+	USlimeMoldMeshEditingTool* NewTool = NewObject<USlimeMoldMeshEditingTool>(SceneState.ToolManager);
 	NewTool->SetWorld(SceneState.World);
 	return NewTool;
 }
@@ -32,8 +39,11 @@ UInteractiveTool* UMeshEditingToolBaseBuilder::BuildTool(const FToolBuilderState
  * Tool logic
  */
 
-void UMeshEditingToolBase::Setup()
+void USlimeMoldMeshEditingTool::Setup()
 {
+	TargetSlimeMoldActor = USlimeMoldEditorFuncLib::GetSingleSelectedSlimeMoldObject();
+	check(TargetSlimeMoldActor);
+
 	UInteractiveTool::Setup();
 
 	// Add default mouse input behavior
@@ -42,8 +52,8 @@ void UMeshEditingToolBase::Setup()
 	AddInputBehavior(MouseBehavior);
 
 	// Create the property set and register it with the Tool
-	Properties = NewObject<UMeshEditingToolBaseProperties>(this);
-	AddToolPropertySource(Properties);
+	ToolProperties = NewObject<USlimeMoldMeshEditingToolProperties>(this);
+	AddToolPropertySource(ToolProperties);
 
 	UE_LOG(LogTemp, Warning, TEXT("This step has been passed"));
 
@@ -51,7 +61,7 @@ void UMeshEditingToolBase::Setup()
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");	
 }
 
-void UMeshEditingToolBase::Shutdown(EToolShutdownType ShutdownType)
+void USlimeMoldMeshEditingTool::Shutdown(EToolShutdownType ShutdownType)
 {
 	switch (ShutdownType)
 	{
@@ -71,13 +81,13 @@ void UMeshEditingToolBase::Shutdown(EToolShutdownType ShutdownType)
 	//FMeshEditingToolBaseCustomization::MeshEditingToolBase.Reset();
 }
 
-void UMeshEditingToolBase::SetWorld(UWorld* World)
+void USlimeMoldMeshEditingTool::SetWorld(UWorld* World)
 {
 	check(World);
 	this->TargetWorld = World;
 }
 
-FInputRayHit UMeshEditingToolBase::CanBeginClickDragSequence(const FInputDeviceRay& PressPos)
+FInputRayHit USlimeMoldMeshEditingTool::CanBeginClickDragSequence(const FInputDeviceRay& PressPos)
 {
 	// we only start drag if press-down is on top of something we can raycast
 	FVector Temp;
@@ -85,7 +95,7 @@ FInputRayHit UMeshEditingToolBase::CanBeginClickDragSequence(const FInputDeviceR
 	return Result;
 }
 
-void UMeshEditingToolBase::OnClickPress(const FInputDeviceRay& PressPos)
+void USlimeMoldMeshEditingTool::OnClickPress(const FInputDeviceRay& PressPos)
 {
 	// cast ray into world to find hit position
 	FVector RayStart = PressPos.WorldRay.Origin;
@@ -100,14 +110,33 @@ void UMeshEditingToolBase::OnClickPress(const FInputDeviceRay& PressPos)
 	}
 }
 
-void UMeshEditingToolBase::OnPropertyModified(UObject* PropertySet, FProperty* Property)
+void USlimeMoldMeshEditingTool::OnPropertyModified(UObject* PropertySet, FProperty* Property)
 {
 	if (!PropertySet) return;
 
-	if (PropertySet != Properties) return;
+	if (PropertySet == ToolProperties)
+	{
+		if (Property->GetName() == "bGenerateMesh")
+		{
+			TargetSlimeMoldActor->GenerateMesh(PropertySet);
+		}
+
+		if (Property->GetName() == "PropertyClass")
+		{
+			if (!ToolProperties->PropertyClass) return;
+			if (MeshProperties)
+			{
+				RemoveToolPropertySource(MeshProperties);
+			}
+
+			// Create the property set and register it with the Tool
+			MeshProperties = NewObject<USlimeMoldMeshPropertyBase>(this, ToolProperties->PropertyClass);
+			AddToolPropertySource(MeshProperties);
+		}
+	}
 }
 
-FInputRayHit UMeshEditingToolBase::FindRayHit(const FRay& WorldRay, FVector& HitPos)
+FInputRayHit USlimeMoldMeshEditingTool::FindRayHit(const FRay& WorldRay, FVector& HitPos)
 {
 	// trace a ray into the World
 	FCollisionObjectQueryParams QueryParams(FCollisionObjectQueryParams::AllObjects);
@@ -121,7 +150,7 @@ FInputRayHit UMeshEditingToolBase::FindRayHit(const FRay& WorldRay, FVector& Hit
 	return FInputRayHit();
 }
 
-void UMeshEditingToolBase::Render(IToolsContextRenderAPI* RenderAPI)
+void USlimeMoldMeshEditingTool::Render(IToolsContextRenderAPI* RenderAPI)
 {
 	FPrimitiveDrawInterface* PDI = RenderAPI->GetPrimitiveDrawInterface();
 }

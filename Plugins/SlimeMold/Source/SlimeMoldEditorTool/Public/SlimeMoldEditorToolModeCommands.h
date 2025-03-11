@@ -20,7 +20,7 @@ public:
 	//TSharedPtr<FUICommandInfo> InteractiveTool;
 	//TSharedPtr<FUICommandInfo> ExampleTool;
 	TSharedPtr<FUICommandInfo> SkeletonEditingTool;
-	//TSharedPtr<FUICommandInfo> LineManagerTool;
+	TSharedPtr<FUICommandInfo> MeshEditingTool;
 
 protected:
 	TMap<FName, TArray<TSharedPtr<FUICommandInfo>>> Commands;

@@ -25,7 +25,7 @@ public:
 	//static FString InteractiveToolName;
 	//static FString ExampleToolName;
 	static FString SkeletonEditingToolName;
-	//static FString LineManagerToolName;
+	static FString MeshEditingToolName;
 
 	USlimeMoldEditorToolEditorMode();
 	virtual ~USlimeMoldEditorToolEditorMode();

@@ -29,8 +29,8 @@ void FSlimeMoldEditorToolModeCommands::RegisterCommands()
 	UI_COMMAND(SkeletonEditingTool, "Skeleton", "This tool manages the skeleton of the goop", EUserInterfaceActionType::ToggleButton, FInputChord());
 	ToolCommands.Add(SkeletonEditingTool);
 
-	/*UI_COMMAND(LineManagerTool, "Line Manager Tool", "This tool manages lines", EUserInterfaceActionType::ToggleButton, FInputChord());
-	ToolCommands.Add(LineManagerTool);*/
+	UI_COMMAND(MeshEditingTool, "Mesh", "This tool operates on mesh generation", EUserInterfaceActionType::ToggleButton, FInputChord());
+	ToolCommands.Add(MeshEditingTool);
 }
 
 TMap<FName, TArray<TSharedPtr<FUICommandInfo>>> FSlimeMoldEditorToolModeCommands::GetCommands()

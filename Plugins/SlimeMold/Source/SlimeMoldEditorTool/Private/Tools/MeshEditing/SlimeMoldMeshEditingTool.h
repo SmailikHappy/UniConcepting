@@ -8,6 +8,7 @@
 
 // SlimeMold actors
 #include "SlimeMoldBase.h"
+#include "Structs.h"
 
 // Adding gizmo to the world
 #include "BaseGizmos/TransformGizmoUtil.h"
@@ -16,36 +17,58 @@
 // Buttons in detail panel
 #include "Components/Button.h"
 
-#include "MeshEditingToolBase.generated.h"
+#include "SlimeMoldMeshEditingTool.generated.h"
 
 /**
  * Tool Builder
  */
 UCLASS()
-class SLIMEMOLDEDITORTOOL_API UMeshEditingToolBaseBuilder : public UInteractiveToolBuilder
+class SLIMEMOLDEDITORTOOL_API USlimeMoldMeshEditingToolBuilder : public UInteractiveToolBuilder
 {
 	GENERATED_BODY()
 
 public:
-	virtual bool CanBuildTool(const FToolBuilderState& SceneState) const override { return true; }
+	virtual bool CanBuildTool(const FToolBuilderState& SceneState) const override;
 	virtual UInteractiveTool* BuildTool(const FToolBuilderState& SceneState) const override;
 };
 
 
 /**
- * Property set
+ * Property sets
  */
 UCLASS(Config = EditorPerProjectUserSettings)
-class SLIMEMOLDEDITORTOOL_API UMeshEditingToolBaseProperties : public UInteractiveToolPropertySet
+class SLIMEMOLDEDITORTOOL_API USlimeMoldMeshEditingToolProperties : public UInteractiveToolPropertySet
 {
 	GENERATED_BODY()
 
 public:
-	UMeshEditingToolBaseProperties() {}
+	USlimeMoldMeshEditingToolProperties() {}
 
 	UPROPERTY(EditAnywhere, Category = "yikes")
 	float flaot;
+
+	UPROPERTY(EditAnywhere, Category = "Default")
+	bool bGenerateMesh;
+
+	// Class of properties that will be passed via function to generate mesh
+	UPROPERTY(EditAnywhere, Category = "Default")
+	TSubclassOf<USlimeMoldMeshPropertyBase> PropertyClass;
 };
+
+
+/**
+ * Base class for properties, to be instantiated in the main Tool porperties, cause the object of this class (variables) will be passed to "generate mesh function"
+ */
+UCLASS(Transient, Blueprintable)
+class SLIMEMOLDEDITORTOOL_API USlimeMoldMeshPropertyBase : public UInteractiveToolPropertySet
+{
+	GENERATED_BODY()
+
+public:
+	USlimeMoldMeshPropertyBase() {}
+};
+
+
 
 
 
@@ -53,7 +76,7 @@ public:
  * Tool logic
  */
 UCLASS()
-class SLIMEMOLDEDITORTOOL_API UMeshEditingToolBase : public UInteractiveTool, public IClickDragBehaviorTarget
+class SLIMEMOLDEDITORTOOL_API USlimeMoldMeshEditingTool : public UInteractiveTool, public IClickDragBehaviorTarget
 {
 	GENERATED_BODY()
 
@@ -77,11 +100,15 @@ public:
 protected:
 	/** Properties of the tool are stored here */
 	UPROPERTY()
-	TObjectPtr<UMeshEditingToolBaseProperties> Properties;
+	TObjectPtr<USlimeMoldMeshEditingToolProperties> ToolProperties;
+
+	UPROPERTY()
+	TObjectPtr<USlimeMoldMeshPropertyBase> MeshProperties;
 
 protected:
 
 	UWorld* TargetWorld = nullptr;		// target World we will raycast into
+	ASlimeMoldBase* TargetSlimeMoldActor = nullptr;
 
 	FInputRayHit FindRayHit(const FRay& WorldRay, FVector& HitPos);		// raycasts into World
 };
