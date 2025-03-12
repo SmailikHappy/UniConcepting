@@ -55,10 +55,18 @@ void USlimeMoldMeshEditingTool::Setup()
 	ToolProperties = NewObject<USlimeMoldMeshEditingToolProperties>(this);
 	AddToolPropertySource(ToolProperties);
 
-	UE_LOG(LogTemp, Warning, TEXT("This step has been passed"));
+	ToolProperties->RestoreProperties(this, "MeshEditingToolProperties");
 
-	// Register the custom detail customization
-	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");	
+	if (ToolProperties->MeshPropertyClass)
+	{
+		// Create the property set and register it with the Tool
+		MeshProperties = NewObject<USlimeMoldMeshPropertyBase>(this, ToolProperties->MeshPropertyClass);
+		AddToolPropertySource(MeshProperties);
+
+		UE_LOG(LogTemp, Warning, TEXT("Mesh properties were created"));
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("Mesh editing tool has been initialized"));
 }
 
 void USlimeMoldMeshEditingTool::Shutdown(EToolShutdownType ShutdownType)
@@ -118,20 +126,29 @@ void USlimeMoldMeshEditingTool::OnPropertyModified(UObject* PropertySet, FProper
 	{
 		if (Property->GetName() == "bGenerateMesh")
 		{
-			TargetSlimeMoldActor->GenerateMesh(PropertySet);
-		}
-
-		if (Property->GetName() == "PropertyClass")
-		{
-			if (!ToolProperties->PropertyClass) return;
-			if (MeshProperties)
+			if (!MeshProperties)
 			{
-				RemoveToolPropertySource(MeshProperties);
+				UE_LOG(LogTemp, Warning, TEXT("Mesh properties are not available"));
+				return;
 			}
 
-			// Create the property set and register it with the Tool
-			MeshProperties = NewObject<USlimeMoldMeshPropertyBase>(this, ToolProperties->PropertyClass);
-			AddToolPropertySource(MeshProperties);
+			FEditorScriptExecutionGuard ScriptGuard;
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Generating mesh"));
+				TargetSlimeMoldActor->GenerateMesh(MeshProperties);
+			}
+		}
+
+		if (Property->GetName() == "MeshPropertyClass")
+		{
+			// Reload the tool, so that MeshProperties with the chosen class would be generated in the panel 
+			// For some reason we cannot add new properties to the tool in runtime
+			// Huge thanks there is a workaround with a tool reloading
+			ToolProperties->SaveProperties(this, "MeshEditingToolProperties");
+			GetToolManager()->DeactivateTool(EToolSide::Left, EToolShutdownType::Completed);
+			GetToolManager()->ActivateTool(EToolSide::Left);
+
+			return;
 		}
 	}
 }

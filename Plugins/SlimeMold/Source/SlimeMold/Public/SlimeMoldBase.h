@@ -2,15 +2,14 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
-#include "InteractiveToolObjects.h"
+#include <CoreMinimal.h>
+#include <DynamicMeshActor.h>
+#include <UDynamicMesh.h>
 #include "Structs.h"
 
 #include "SlimeMoldBase.generated.h"
-
 UCLASS()
-class SLIMEMOLD_API ASlimeMoldBase : public AActor
+class SLIMEMOLD_API ASlimeMoldBase : public ADynamicMeshActor
 {
 	GENERATED_BODY()
 
@@ -24,13 +23,21 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<FSkeletonLine> SkeletonLines;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	USkeletonPoint* SkeletonPoint1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	USkeletonPoint* SkeletonPoint2;
+
 protected:
 
 	virtual void BeginPlay() override;
 
+
 public:
+	// The user should implement the generation of the mesh
 	UFUNCTION(BlueprintImplementableEvent)
-	void GenerateMesh(UObject* Properties);
+	void GenerateMesh(UObject* UserProperties);
 
 	virtual void Tick(float DeltaTime) override;
 };

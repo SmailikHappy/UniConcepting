@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "Structs.generated.h"
 
-UCLASS(BlueprintType)
+UCLASS(Blueprintable, BlueprintType)
 class SLIMEMOLD_API USkeletonPoint : public UObject
 {
 	GENERATED_BODY()
@@ -38,4 +38,4 @@ struct SLIMEMOLD_API FSkeletonLine
 		return (this->Point1 == Other.Point1 && this->Point2 == Other.Point2)
 			|| (this->Point1 == Other.Point2 && this->Point2 == Other.Point1);
 	}
-}; 
+};

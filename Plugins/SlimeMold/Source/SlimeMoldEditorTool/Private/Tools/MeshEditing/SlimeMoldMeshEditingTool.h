@@ -52,12 +52,14 @@ public:
 
 	// Class of properties that will be passed via function to generate mesh
 	UPROPERTY(EditAnywhere, Category = "Default")
-	TSubclassOf<USlimeMoldMeshPropertyBase> PropertyClass;
+	TSubclassOf<USlimeMoldMeshPropertyBase> MeshPropertyClass;
 };
 
 
 /**
- * Base class for properties, to be instantiated in the main Tool porperties, cause the object of this class (variables) will be passed to "generate mesh function"
+ * Base class for properties, has to be instantiated in the main Tool porperties, 
+ * The object of this class (with a lot of variables) will be passed to "generate mesh function"
+ * Then read in blueprint
  */
 UCLASS(Transient, Blueprintable)
 class SLIMEMOLDEDITORTOOL_API USlimeMoldMeshPropertyBase : public UInteractiveToolPropertySet
@@ -65,7 +67,7 @@ class SLIMEMOLDEDITORTOOL_API USlimeMoldMeshPropertyBase : public UInteractiveTo
 	GENERATED_BODY()
 
 public:
-	USlimeMoldMeshPropertyBase() {}
+	USlimeMoldMeshPropertyBase() {} 
 };
 
 
@@ -109,6 +111,7 @@ protected:
 
 	UWorld* TargetWorld = nullptr;		// target World we will raycast into
 	ASlimeMoldBase* TargetSlimeMoldActor = nullptr;
+	bool bSpawnProperties = false;
 
 	FInputRayHit FindRayHit(const FRay& WorldRay, FVector& HitPos);		// raycasts into World
 };

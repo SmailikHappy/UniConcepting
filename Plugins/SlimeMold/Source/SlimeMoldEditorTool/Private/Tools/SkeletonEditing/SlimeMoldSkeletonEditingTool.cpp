@@ -172,6 +172,15 @@ void USlimeMoldSkeletonEditingTool::MousePressed()
 				ConnectPoints(Point, NewPoint);
 			}
 
+			if (!TargetSlimeMoldActor->SkeletonPoint1)
+			{
+				TargetSlimeMoldActor->SkeletonPoint1 = NewPoint;
+			}
+			else if (!TargetSlimeMoldActor->SkeletonPoint2)
+			{
+				TargetSlimeMoldActor->SkeletonPoint2 = NewPoint;
+			}
+
 			JustConnectedPoint = NewPoint;
 		}
 

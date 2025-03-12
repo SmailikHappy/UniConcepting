@@ -2,15 +2,16 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
+#include <CoreMinimal.h>
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "Structs.h"
+#include "SlimeMoldBase.h"
 #include "SlimeMoldEditorToolFunctionLibrary.generated.h"
 
 
-class ASlimeMoldBase;
-
 /**
- * Static functions for the editor tool
+ * Static functions for the editor tool 
+ * NOT callable from blueprints, cause this module is not available in runtime
  */
 UCLASS()
 class SLIMEMOLDEDITORTOOL_API USlimeMoldEditorFuncLib : public UBlueprintFunctionLibrary
@@ -21,4 +22,6 @@ public:
 
 	static bool SingleSlimeMoldObjectIsSelected();
 	static ASlimeMoldBase* GetSingleSelectedSlimeMoldObject();
+
+	static void GetPoints(ASlimeMoldBase* SlimeMold, TArray<USkeletonPoint*>& Array) { Array = SlimeMold->SkeletonPoints; }
 };
