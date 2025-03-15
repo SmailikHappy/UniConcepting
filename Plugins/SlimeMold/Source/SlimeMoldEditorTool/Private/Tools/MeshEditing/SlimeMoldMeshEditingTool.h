@@ -6,8 +6,8 @@
 #include "InteractiveToolBuilder.h"
 #include "BaseTools/ClickDragTool.h"
 
-// SlimeMold actors
-#include "SlimeMoldBase.h"
+// SlimeMold data structures
+#include "SlimeMoldSkeletonComponent.h"
 #include "Structs.h"
 
 // Adding gizmo to the world
@@ -110,7 +110,7 @@ protected:
 protected:
 
 	UWorld* TargetWorld = nullptr;		// target World we will raycast into
-	ASlimeMoldBase* TargetSlimeMoldActor = nullptr;
+	USlimeMoldSkeletonComponent* TargetActorComponent = nullptr;
 	bool bSpawnProperties = false;
 
 	FInputRayHit FindRayHit(const FRay& WorldRay, FVector& HitPos);		// raycasts into World

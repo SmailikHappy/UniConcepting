@@ -5,12 +5,10 @@
 #include "CoreMinimal.h"
 #include "Structs.generated.h"
 
-UCLASS(Blueprintable, BlueprintType)
-class SLIMEMOLD_API USkeletonPoint : public UObject
+USTRUCT(Blueprintable, BlueprintType)
+struct SLIMEMOLD_API FSkeletonPoint
 {
 	GENERATED_BODY()
-
-public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector WorldPos = FVector::ZeroVector;
@@ -19,23 +17,25 @@ public:
 	FVector WorldNormal = FVector::ZAxisVector;
 };
 
+
+
 USTRUCT(BlueprintType)
 struct SLIMEMOLD_API FSkeletonLine
 {
 	GENERATED_BODY()
 
 	FSkeletonLine() {}
-	FSkeletonLine(USkeletonPoint* i, USkeletonPoint* j) : Point1(i), Point2(j) {}
+	FSkeletonLine(int32 i, int32 j) : Point1ID(i), Point2ID(j) {}
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	USkeletonPoint* Point1 = nullptr;
+	int32 Point1ID = -1;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	USkeletonPoint* Point2 = nullptr;
+	int32 Point2ID = -1;
 
 	bool operator==(const FSkeletonLine& Other) const
 	{
-		return (this->Point1 == Other.Point1 && this->Point2 == Other.Point2)
-			|| (this->Point1 == Other.Point2 && this->Point2 == Other.Point1);
+		return (this->Point1ID == Other.Point1ID && this->Point2ID == Other.Point2ID)
+			|| (this->Point1ID == Other.Point2ID && this->Point2ID == Other.Point1ID);
 	}
 };

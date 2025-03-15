@@ -25,7 +25,7 @@
 
 bool USlimeMoldMeshEditingToolBuilder::CanBuildTool(const FToolBuilderState& SceneState) const
 {
-	return USlimeMoldEditorFuncLib::SingleSlimeMoldObjectIsSelected();
+	return USlimeMoldEditorFuncLib::SingleActorWithSkeletonComponentIsSelected();
 }
 
 UInteractiveTool* USlimeMoldMeshEditingToolBuilder::BuildTool(const FToolBuilderState& SceneState) const
@@ -41,8 +41,8 @@ UInteractiveTool* USlimeMoldMeshEditingToolBuilder::BuildTool(const FToolBuilder
 
 void USlimeMoldMeshEditingTool::Setup()
 {
-	TargetSlimeMoldActor = USlimeMoldEditorFuncLib::GetSingleSelectedSlimeMoldObject();
-	check(TargetSlimeMoldActor);
+	TargetActorComponent = USlimeMoldEditorFuncLib::GetSkeletonComponentFromSelectedActor();
+	check(TargetActorComponent);
 
 	UInteractiveTool::Setup();
 
@@ -135,7 +135,7 @@ void USlimeMoldMeshEditingTool::OnPropertyModified(UObject* PropertySet, FProper
 			FEditorScriptExecutionGuard ScriptGuard;
 			{
 				UE_LOG(LogTemp, Warning, TEXT("Generating mesh"));
-				TargetSlimeMoldActor->GenerateMesh(MeshProperties);
+				TargetActorComponent->OnGenerateMesh.Broadcast(MeshProperties);
 			}
 		}
 

@@ -1,9 +1,10 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
+
 #include "SlimeMoldEditorToolFunctionLibrary.h"
 #include "Selection.h"
-#include "SlimeMoldBase.h"
 
-bool USlimeMoldEditorFuncLib::SingleSlimeMoldObjectIsSelected()
+
+bool USlimeMoldEditorFuncLib::SingleActorWithSkeletonComponentIsSelected()
 {
 	TArray<UObject*> SelectedObjects;
 	GEditor->GetSelectedActors()->GetSelectedObjects(SelectedObjects);
@@ -13,7 +14,14 @@ bool USlimeMoldEditorFuncLib::SingleSlimeMoldObjectIsSelected()
 		return false;
 	}
 
-	if (Cast<ASlimeMoldBase>(SelectedObjects[0]) == nullptr)
+	AActor* SelectedActor = Cast<AActor>(SelectedObjects[0]);
+
+	if (!SelectedActor)
+	{
+		return false;
+	}
+
+	if (SelectedActor->GetComponentByClass<USlimeMoldSkeletonComponent>() == nullptr)
 	{
 		return false;
 	}
@@ -21,13 +29,13 @@ bool USlimeMoldEditorFuncLib::SingleSlimeMoldObjectIsSelected()
 	return true;
 }
 
-ASlimeMoldBase* USlimeMoldEditorFuncLib::GetSingleSelectedSlimeMoldObject()
+USlimeMoldSkeletonComponent* USlimeMoldEditorFuncLib::GetSkeletonComponentFromSelectedActor()
 {
-	if (SingleSlimeMoldObjectIsSelected())
+	if (SingleActorWithSkeletonComponentIsSelected())
 	{
 		TArray<UObject*> SelectedObjects;
 		GEditor->GetSelectedActors()->GetSelectedObjects(SelectedObjects);
-		return Cast<ASlimeMoldBase>(SelectedObjects[0]);
+		return Cast<AActor>(SelectedObjects[0])->GetComponentByClass<USlimeMoldSkeletonComponent>();
 	}
 
 	return nullptr;

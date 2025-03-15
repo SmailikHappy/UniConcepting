@@ -7,8 +7,8 @@
 #include "BaseTools/ClickDragTool.h"
 #include "BaseTools/SingleClickTool.h"
 
-// SlimeMold actors
-#include "SlimeMoldBase.h"
+// SlimeMold data structures
+#include "SlimeMoldSkeletonComponent.h"
 #include "Structs.h"
 
 // Adding gizmo to the world
@@ -129,14 +129,14 @@ protected:
 	
 	/** Skeleton managing functions */
 	void AssignProperties();
-	void SelectPoint(USkeletonPoint* Point);
-	void DeselectPoint(USkeletonPoint* Point);
+	void SelectPoint(int32 PointID);
+	void DeselectPoint(int32 PointID);
 	void DeselectAllPoints();
 	void DeleteSelectedPoints();
-	void ConnectPoints(USkeletonPoint* Point1, USkeletonPoint* Point2);
-	void DisconnectPoints(USkeletonPoint* Point1, USkeletonPoint* Point2);
+	void ConnectPoints(int32 Point1ID, int32 Point2ID);
+	void DisconnectPoints(int32 Point1ID, int32 Point2ID);
 	void DisconnectSelectedPoints();
-	void SplitLine(FSkeletonLine line);
+	void SplitLine(const FSkeletonLine& line);
 
 
 
@@ -146,11 +146,11 @@ protected:
 
 	/** Helper functions */
 	TArray<FSkeletonLine> GetSelectedLines();
-	TSet<USkeletonPoint*> GetPointsInMouseRegion(const FInputDeviceRay& DevicePos, float RayRadiusCoefficent);
-	USkeletonPoint* GetClosestPointToMouse(const FInputDeviceRay& DevicePos, TSet<USkeletonPoint*>& SetOfPoints);
+	TSet<int32> GetPointIDsInMouseRegion(const FInputDeviceRay& DevicePos, float RayRadiusCoefficent);
+	FSkeletonPoint& GetClosestPointToMouse(const FInputDeviceRay& DevicePos, const TSet<int32>& SetOfPointIDs, int32& ClosestPointID);
 	FInputRayHit FindRayHit(const FRay& WorldRay, FVector& HitPos);
 
-	USkeletonPoint* CreatePoint(const FInputDeviceRay& ClickPos);
+	FSkeletonPoint& CreatePoint(const FInputDeviceRay& ClickPos, int32& NewPointID);
 	void Msg(const FString& Msg);
 
 private:
@@ -166,6 +166,8 @@ private:
 	UCombinedTransformGizmo* TransformGizmo = nullptr;
 	FVector GizmoPositionDelta = FVector::ZeroVector;
 
+	int UniqueID = 0;
+
 protected:
 
 	// Variable updates only when the mouse is not pressed
@@ -180,12 +182,14 @@ protected:
 	FInputDeviceRay MouseRayWhenReleased;
 
 	UWorld* TargetWorld = nullptr;
-	ASlimeMoldBase* TargetSlimeMoldActor = nullptr;
-	TSet<USkeletonPoint*> SelectedPoints;		// set ensures no duplicates
+	USlimeMoldSkeletonComponent* TargetActorComponent = nullptr;
+	TSet<int32> SelectedPointIDs;		// set ensures no duplicates
 	 
 	bool bDrawGhostPoint = false;
 	bool bDrawGhostLines = false;
-	USkeletonPoint* GhostPoint;		// A ghost point that is not yet placed but is being shown where it could be placed OR
-									// A ghost connection with selected and ghost-Point, shown where new Lines might appear
+	FSkeletonPoint GhostPoint;		// A ghost point that is not yet placed but is being shown where it could be placed OR
+									// A ghost connection with selected and ghost point, shown where new lines might appear
+
+
 	bool bConnectGhostAndSelectedPoints = true;
 };

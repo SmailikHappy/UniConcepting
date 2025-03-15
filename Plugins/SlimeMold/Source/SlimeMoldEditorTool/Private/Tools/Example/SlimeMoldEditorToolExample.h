@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "InteractiveToolBuilder.h"
 #include "BaseTools/ClickDragTool.h"
-#include "SlimeMoldBase.h"
+#include "SlimeMoldSkeletonComponent.h"
 #include "SlimeMoldEditorToolExample.generated.h"
 
 

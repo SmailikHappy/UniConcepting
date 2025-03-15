@@ -31,7 +31,7 @@
 
 bool USlimeMoldSkeletonEditingToolBuilder::CanBuildTool(const FToolBuilderState& SceneState) const
 {
-	return USlimeMoldEditorFuncLib::SingleSlimeMoldObjectIsSelected();
+	return USlimeMoldEditorFuncLib::SingleActorWithSkeletonComponentIsSelected();
 }
 
 UInteractiveTool* USlimeMoldSkeletonEditingToolBuilder::BuildTool(const FToolBuilderState& SceneState) const
@@ -49,8 +49,8 @@ UInteractiveTool* USlimeMoldSkeletonEditingToolBuilder::BuildTool(const FToolBui
 
 void USlimeMoldSkeletonEditingTool::Setup()
 {
-	TargetSlimeMoldActor = USlimeMoldEditorFuncLib::GetSingleSelectedSlimeMoldObject();
-	check(TargetSlimeMoldActor);
+	TargetActorComponent = USlimeMoldEditorFuncLib::GetSkeletonComponentFromSelectedActor();
+	check(TargetActorComponent);
 
 	UInteractiveTool::Setup();
 
@@ -66,8 +66,6 @@ void USlimeMoldSkeletonEditingTool::Setup()
 	HoverBehavior->Modifiers.RegisterModifier(2, FInputDeviceState::IsCtrlKeyDown);
 
 	CreateGizmo();
-
-	GhostPoint = NewObject<USkeletonPoint>();
 
 	AssignProperties();
 }
@@ -122,73 +120,73 @@ void USlimeMoldSkeletonEditingTool::MousePressed()
 	{
 		DeselectAllPoints();
 
-		TSet<USkeletonPoint*> PointsInRegion = GetPointsInMouseRegion(MouseRayWhenPressed, MouseRadiusCoefficent);
+		TSet<int32> PointsInRegion = GetPointIDsInMouseRegion(MouseRayWhenPressed, MouseRadiusCoefficent);
 
 		if (!PointsInRegion.IsEmpty())
 		{
-			USkeletonPoint* ClosestPoint = GetClosestPointToMouse(MouseRayWhenPressed, PointsInRegion);
-			SelectPoint(ClosestPoint);
+			int32 ClosestPointID;
+			GetClosestPointToMouse(MouseRayWhenPressed, PointsInRegion, ClosestPointID);
+			SelectPoint(ClosestPointID);
 		}
 	}
 
 	// Select another point
 	if (!ShiftIsPressed && CtrlIsPressed)
 	{
-		TSet<USkeletonPoint*> PointsInRegion = GetPointsInMouseRegion(MouseRayWhenPressed, MouseRadiusCoefficent);
+		TSet<int32> PointIDsInRegion = GetPointIDsInMouseRegion(MouseRayWhenPressed, MouseRadiusCoefficent);
 
-		if (!PointsInRegion.IsEmpty())
+		// Select the closest point
+		if (!PointIDsInRegion.IsEmpty())
 		{
-			USkeletonPoint* ClosestPoint = GetClosestPointToMouse(MouseRayWhenPressed, PointsInRegion);
-			SelectPoint(ClosestPoint);
+			int32 ClosestPointID;
+			GetClosestPointToMouse(MouseRayWhenPressed, PointIDsInRegion, ClosestPointID);
+			SelectPoint(ClosestPointID);
 		}
 	}
 
 	// Connect points / create and connect
 	if (ShiftIsPressed && !CtrlIsPressed)
 	{
-		TSet<USkeletonPoint*> PointsInRegion = GetPointsInMouseRegion(MouseRayWhenPressed, MouseRadiusCoefficent);
+		TSet<int32> PointsInRegion = GetPointIDsInMouseRegion(MouseRayWhenPressed, MouseRadiusCoefficent);
 
-		USkeletonPoint* JustConnectedPoint = nullptr;
+		int32 JustConnectedPointID = -1;
 
 		if (!PointsInRegion.IsEmpty())
 		{
-			USkeletonPoint* ClosestPoint = GetClosestPointToMouse(MouseRayWhenPressed, PointsInRegion);
-			if (ClosestPoint)
+			int32 ClosestPointID;
+			GetClosestPointToMouse(MouseRayWhenPressed, PointsInRegion, ClosestPointID);
+
+			if (ClosestPointID != -1)
 			{
-				for (USkeletonPoint* Point : SelectedPoints)
+				for (int32 PointID : SelectedPointIDs)
 				{
-					ConnectPoints(Point, ClosestPoint);
+					ConnectPoints(PointID, ClosestPointID);
 				}
 			}
 
-			JustConnectedPoint = ClosestPoint;
+			JustConnectedPointID = ClosestPointID;
 		}
 		else
 		{
-			USkeletonPoint* NewPoint = CreatePoint(MouseRayWhenPressed);
+			int32 NewPointID;
+			CreatePoint(MouseRayWhenPressed, NewPointID);
 
-			for (USkeletonPoint* Point : SelectedPoints)
+			for (int32 PointID : SelectedPointIDs)
 			{
-				ConnectPoints(Point, NewPoint);
+				ConnectPoints(PointID, NewPointID);
 			}
 
-			if (!TargetSlimeMoldActor->SkeletonPoint1)
-			{
-				TargetSlimeMoldActor->SkeletonPoint1 = NewPoint;
-			}
-			else if (!TargetSlimeMoldActor->SkeletonPoint2)
-			{
-				TargetSlimeMoldActor->SkeletonPoint2 = NewPoint;
-			}
-
-			JustConnectedPoint = NewPoint;
+			JustConnectedPointID = NewPointID;
 		}
 
 		// Chenge selection from selected points just connected one
 		if (Properties->bChangeSelectionOnPointCreate)
 		{
 			DeselectAllPoints();
-			SelectPoint(JustConnectedPoint);
+
+			if (JustConnectedPointID != -1) {
+				SelectPoint(JustConnectedPointID);
+			}
 		}
 	}
 }
@@ -203,11 +201,11 @@ void USlimeMoldSkeletonEditingTool::MouseUpdate(const FInputDeviceRay& DevicePos
 	// Multiple point selection with just mouse hovering around
 	if (MouseIsPressed && !ShiftIsPressed && CtrlIsPressed)
 	{
-		TSet<USkeletonPoint*> PointsInRegion = GetPointsInMouseRegion(DevicePos, MouseRadiusCoefficent);
+		TSet<int32> PointIDsInRegion = GetPointIDsInMouseRegion(DevicePos, MouseRadiusCoefficent);
 		
-		for (USkeletonPoint* Point : PointsInRegion)
+		for (int32 PointID : PointIDsInRegion)
 		{
-			SelectPoint(Point);
+			SelectPoint(PointID);
 		}
 	}
 
@@ -215,22 +213,21 @@ void USlimeMoldSkeletonEditingTool::MouseUpdate(const FInputDeviceRay& DevicePos
 	if (!MouseIsPressed && ShiftIsPressed && !CtrlIsPressed)
 	{
 		bDrawGhostLines = true;
-		TSet<USkeletonPoint*> PointsInRegion = GetPointsInMouseRegion(DevicePos, MouseRadiusCoefficent);
+		TSet<int32> PointsInRegion = GetPointIDsInMouseRegion(DevicePos, MouseRadiusCoefficent);
 
 		if (!PointsInRegion.IsEmpty())
 		{
-			USkeletonPoint* ClosestPoint = GetClosestPointToMouse(DevicePos, PointsInRegion);
-			if (ClosestPoint)
+			int32 ClosestPointID;
+			FSkeletonPoint& ClosestPoint = GetClosestPointToMouse(DevicePos, PointsInRegion, ClosestPointID);
+			if (ClosestPointID != -1)
 			{
-				// Just copy data, do not replace the GhostPoint pointer
-				GhostPoint->WorldPos = ClosestPoint->WorldPos;
-				GhostPoint->WorldNormal = ClosestPoint->WorldNormal;
+				GhostPoint = ClosestPoint;
 			}
 		}
 		else
 		{
 			bDrawGhostPoint = true;
-			FindRayHit(DevicePos.WorldRay, GhostPoint->WorldPos);
+			FindRayHit(DevicePos.WorldRay, GhostPoint.WorldPos);
 		}
 	}
 }
@@ -309,26 +306,24 @@ void USlimeMoldSkeletonEditingTool::OnUpdateModifierState(int ModifierID, bool b
 /*
  * Skeleton related functions
  */
-void USlimeMoldSkeletonEditingTool::SelectPoint(USkeletonPoint* Point)
+void USlimeMoldSkeletonEditingTool::SelectPoint(int32 PointID)
 {
-	check(Point);
-
-	if (SelectedPoints.IsEmpty())
+	if (SelectedPointIDs.IsEmpty())
 	{
-		ShowGizmo(FTransform(Point->WorldPos));
+		ShowGizmo(FTransform(TargetActorComponent->SkeletonPoints[PointID].WorldPos));
 	}
 
-	SelectedPoints.Add(Point);
+	SelectedPointIDs.Add(PointID);
 }
 
-void USlimeMoldSkeletonEditingTool::DeselectPoint(USkeletonPoint* Point)
+void USlimeMoldSkeletonEditingTool::DeselectPoint(int32 PointID)
 {
-	if (SelectedPoints.Contains(Point))
+	if (SelectedPointIDs.Contains(PointID))
 	{
-		SelectedPoints.Remove(Point);
+		SelectedPointIDs.Remove(PointID);
 	}
 
-	if (SelectedPoints.IsEmpty())
+	if (SelectedPointIDs.IsEmpty())
 	{
 		HideGizmo();
 	}
@@ -336,73 +331,87 @@ void USlimeMoldSkeletonEditingTool::DeselectPoint(USkeletonPoint* Point)
 
 void USlimeMoldSkeletonEditingTool::DeselectAllPoints()
 {
-	SelectedPoints.Empty();
+	SelectedPointIDs.Empty();
 	HideGizmo();
 }
 
 void USlimeMoldSkeletonEditingTool::DeleteSelectedPoints()
 {
-	for (USkeletonPoint* Point : SelectedPoints)
+	// Remove connected lines to these points first
+	for (int32 PointID : SelectedPointIDs)
 	{
-		// Remove all lines connected to this point
-		/*for (int i = 0; i < TargetSlimeMoldActor->SkeletonLines.Num(); i++)
+		for (int i = 0; i < TargetActorComponent->SkeletonLines.Num(); i++)
 		{
-			FSkeletonLine& Line = TargetSlimeMoldActor->SkeletonLines[i];
-
-			if (&TargetSlimeMoldActor->SkeletonPoints[Line.PointIndex1] == Point ||
-				&TargetSlimeMoldActor->SkeletonPoints[Line.PointIndex2] == Point)
+			FSkeletonLine& Line = TargetActorComponent->SkeletonLines[i];
+			if (Line.Point1ID == PointID || Line.Point2ID == PointID)
 			{
-				LinesIndicesToRemove.insert(i);
+				TargetActorComponent->SkeletonLines.RemoveAt(i--);
 			}
-		}*/
+		}
+	}
 
-		//TargetSlimeMoldActor->SkeletonLines.RemoveAll([Point](FSkeletonLine Line) {
-		//	return Line.Point1 == Point || Line.Point2 == Point;
-		//	});
+	// Reconnect lines to right IDs
+	TArray<int32> SelectedPointIDsArray = SelectedPointIDs.Array();
+	SelectedPointIDsArray.Sort();
 
-		for (int i = 0; i < TargetSlimeMoldActor->SkeletonLines.Num(); i++)
+	DeselectAllPoints();
+
+	while (!SelectedPointIDsArray.IsEmpty())
+	{
+		int32 PointIDToRemove = SelectedPointIDsArray[0];
+
+		TargetActorComponent->SkeletonPoints.RemoveAt(PointIDToRemove);
+
+		// Lower the indices of the points in the lines
+		for (FSkeletonLine& Line : TargetActorComponent->SkeletonLines)
 		{
-			FSkeletonLine& Line = TargetSlimeMoldActor->SkeletonLines[i];
-			if (Line.Point1 == Point || Line.Point2 == Point)
+			if (Line.Point1ID > PointIDToRemove)
 			{
-				TargetSlimeMoldActor->SkeletonLines.RemoveAt(i--);
+				Line.Point1ID--;
+			}
+			if (Line.Point2ID > PointIDToRemove)
+			{
+				Line.Point2ID--;
 			}
 		}
 
-		TargetSlimeMoldActor->SkeletonPoints.Remove(Point);
+		// Lower the indices of the selected points
+		for (int32& PointID : SelectedPointIDsArray)
+		{
+			PointID--;
+		}
+
+		SelectedPointIDsArray.RemoveAt(0);
 	}
-	
-	DeselectAllPoints();
 }
 
-void USlimeMoldSkeletonEditingTool::ConnectPoints(USkeletonPoint* Point1, USkeletonPoint* Point2)
+void USlimeMoldSkeletonEditingTool::ConnectPoints(int32 Point1ID, int32 Point2ID)
 {
+	// Add a new line
+	FSkeletonLine NewLine;
+	NewLine.Point1ID = Point1ID;
+	NewLine.Point2ID = Point2ID;
 	// Check if the points are already connected
-	for (const FSkeletonLine& Line : TargetSlimeMoldActor->SkeletonLines)
+	for (const FSkeletonLine& Line : TargetActorComponent->SkeletonLines)
 	{
-		if ((Line.Point1 == Point1 && Line.Point2 == Point2) ||
-			(Line.Point1 == Point2 && Line.Point2 == Point1))
+		if (NewLine == Line)
 		{
 			return;
 		}
 	}
-	// Add a new line
-	FSkeletonLine NewLine;
-	NewLine.Point1 = Point1;
-	NewLine.Point2 = Point2;
-	TargetSlimeMoldActor->SkeletonLines.Add(NewLine);
+	TargetActorComponent->SkeletonLines.Add(NewLine);
 }
 
-void USlimeMoldSkeletonEditingTool::DisconnectPoints(USkeletonPoint* Point1, USkeletonPoint* Point2)
+void USlimeMoldSkeletonEditingTool::DisconnectPoints(int32 Point1ID, int32 Point2ID)
 {
 	// Find the line to remove
-	for (int i = 0; i < TargetSlimeMoldActor->SkeletonLines.Num(); i++)
+	FSkeletonLine LineToRemove(Point1ID, Point2ID);
+	for (int i = 0; i < TargetActorComponent->SkeletonLines.Num(); i++)
 	{
-		FSkeletonLine& Line = TargetSlimeMoldActor->SkeletonLines[i];
-		if ((Line.Point1 == Point1 && Line.Point2 == Point2) ||
-			(Line.Point1 == Point2 && Line.Point2 == Point1))
+		FSkeletonLine& Line = TargetActorComponent->SkeletonLines[i];
+		if (LineToRemove == Line)
 		{
-			TargetSlimeMoldActor->SkeletonLines.RemoveAt(i);
+			TargetActorComponent->SkeletonLines.RemoveAt(i);
 			return;
 		}
 	}
@@ -411,13 +420,13 @@ void USlimeMoldSkeletonEditingTool::DisconnectPoints(USkeletonPoint* Point1, USk
 void USlimeMoldSkeletonEditingTool::DisconnectSelectedPoints()
 {
 	// UNOPTIMIZED -> Check on speeds
-	for (USkeletonPoint* Point1 : SelectedPoints)
+	for (int32 Point1ID : SelectedPointIDs)
 	{
-		for (USkeletonPoint* Point2 : SelectedPoints)
+		for (int32 Point2ID : SelectedPointIDs)
 		{
-			if (Point1 != Point2)
+			if (Point1ID != Point2ID)
 			{
-				DisconnectPoints(Point1, Point2);
+				DisconnectPoints(Point1ID, Point2ID);
 			}
 		}
 	}
@@ -427,9 +436,9 @@ TArray<FSkeletonLine> USlimeMoldSkeletonEditingTool::GetSelectedLines()
 {
 	TArray<FSkeletonLine> LineArray;
 
-	for (FSkeletonLine& Line : TargetSlimeMoldActor->SkeletonLines)
+	for (FSkeletonLine& Line : TargetActorComponent->SkeletonLines)
 	{
-		if (SelectedPoints.Contains(Line.Point1) && SelectedPoints.Contains(Line.Point2))
+		if (SelectedPointIDs.Contains(Line.Point1ID) && SelectedPointIDs.Contains(Line.Point2ID))
 		{
 			LineArray.Add(Line);
 		}
@@ -438,9 +447,9 @@ TArray<FSkeletonLine> USlimeMoldSkeletonEditingTool::GetSelectedLines()
 	return LineArray;
 }
 
-TSet<USkeletonPoint*> USlimeMoldSkeletonEditingTool::GetPointsInMouseRegion(const FInputDeviceRay& DevicePos, float RayRadiusCoefficent)
+TSet<int32> USlimeMoldSkeletonEditingTool::GetPointIDsInMouseRegion(const FInputDeviceRay& DevicePos, float RayRadiusCoefficent)
 {
-	TSet<USkeletonPoint*> PointsInRegion;
+	TSet<int32> PointsInRegion;
 
 	FEditorViewportClient* client = (FEditorViewportClient*)GEditor->GetActiveViewport()->GetClient();
 	FVector CameraRotation = client->GetViewRotation().Vector();
@@ -448,65 +457,71 @@ TSet<USkeletonPoint*> USlimeMoldSkeletonEditingTool::GetPointsInMouseRegion(cons
 
 	float dotProductK = FVector::DotProduct(CameraRotation, DevicePos.WorldRay.Direction);
 
-	for (USkeletonPoint* Point : TargetSlimeMoldActor->SkeletonPoints)
+	for (int32 PointID = 0; PointID < TargetActorComponent->SkeletonPoints.Num(); PointID++)
 	{
-		FVector DirectionToPoint = Point->WorldPos - CameraLocation;
+		FSkeletonPoint& Point = TargetActorComponent->SkeletonPoints[PointID];
+
+		FVector DirectionToPoint = Point.WorldPos - CameraLocation;
 		DirectionToPoint.Normalize();
 
 		float OneMinusDotProduct = 1.0f - FVector::DotProduct(DirectionToPoint, DevicePos.WorldRay.Direction);
 
 		if (OneMinusDotProduct / (dotProductK * dotProductK * dotProductK) < RayRadiusCoefficent)
 		{
-			PointsInRegion.Add(Point);
+			PointsInRegion.Add(PointID);
 		}
 	}
 
 	return PointsInRegion;
 }
 
-USkeletonPoint* USlimeMoldSkeletonEditingTool::GetClosestPointToMouse(const FInputDeviceRay& DevicePos, TSet<USkeletonPoint*>& SetOfPoints)
+FSkeletonPoint& USlimeMoldSkeletonEditingTool::GetClosestPointToMouse(const FInputDeviceRay& DevicePos, const TSet<int32>& SetOfPoints, int32& ClosestPointID)
 {
 	// The closest point is the one with biggest dot product
-	USkeletonPoint* ClosestPoint = nullptr;
+	ClosestPointID = -1;
 	float MaxDotProduct = 0.0f;
 
-	for (USkeletonPoint* Point : SetOfPoints)
+	for (int32 PointID : SetOfPoints)
 	{
-		FVector DirectionToPoint = Point->WorldPos - DevicePos.WorldRay.Origin;
+		FSkeletonPoint& Point = TargetActorComponent->SkeletonPoints[PointID];
+		FVector DirectionToPoint = Point.WorldPos - DevicePos.WorldRay.Origin;
 		DirectionToPoint.Normalize();
 		float DotProduct = FVector::DotProduct(DirectionToPoint, DevicePos.WorldRay.Direction);
 		if (DotProduct > MaxDotProduct)
 		{
 			MaxDotProduct = DotProduct;
-			ClosestPoint = Point;
+			ClosestPointID = PointID;
 		}
 	}
 
-	return ClosestPoint;
+	return TargetActorComponent->SkeletonPoints[ClosestPointID];
 }
 
-void USlimeMoldSkeletonEditingTool::SplitLine(FSkeletonLine line)
+void USlimeMoldSkeletonEditingTool::SplitLine(const FSkeletonLine& Line)
 {
 	// Create a new point in the middle of the line
-	USkeletonPoint* NewPoint = NewObject<USkeletonPoint>(TargetSlimeMoldActor);
-	NewPoint->WorldPos = (line.Point1->WorldPos + line.Point2->WorldPos) / 2.0f;
-	NewPoint->WorldNormal = (line.Point1->WorldNormal + line.Point2->WorldNormal) / 2.0f;
+	FSkeletonPoint NewPoint;
+	FSkeletonPoint& LinePoint1 = TargetActorComponent->SkeletonPoints[Line.Point1ID];
+	FSkeletonPoint& LinePoint2 = TargetActorComponent->SkeletonPoints[Line.Point2ID];
 
-	TargetSlimeMoldActor->SkeletonPoints.Add(NewPoint);
+	NewPoint.WorldPos = (LinePoint1.WorldPos + LinePoint2.WorldPos) / 2.0f;
+	NewPoint.WorldNormal = (LinePoint1.WorldNormal + LinePoint2.WorldNormal) / 2.0f;
+
+	int32 NewPointID = TargetActorComponent->SkeletonPoints.Add(NewPoint);
 
 	// Create two new lines
 	FSkeletonLine NewLine1;
-	NewLine1.Point1 = line.Point1;
-	NewLine1.Point2 = NewPoint;
-	TargetSlimeMoldActor->SkeletonLines.Add(NewLine1);
+	NewLine1.Point1ID = Line.Point1ID;
+	NewLine1.Point2ID = NewPointID;
+	TargetActorComponent->SkeletonLines.Add(NewLine1);
 
 	FSkeletonLine NewLine2;
-	NewLine2.Point1 = NewPoint;
-	NewLine2.Point2 = line.Point2;
-	TargetSlimeMoldActor->SkeletonLines.Add(NewLine2);
+	NewLine2.Point1ID = NewPointID;
+	NewLine2.Point2ID = Line.Point2ID;
+	TargetActorComponent->SkeletonLines.Add(NewLine2);
 
 	// Remove the old line
-	TargetSlimeMoldActor->SkeletonLines.Remove(line);
+	TargetActorComponent->SkeletonLines.Remove(Line);
 }
 
 void USlimeMoldSkeletonEditingTool::DrawDebugMouseInfo(const FInputDeviceRay& DevicePos, FColor Color)
@@ -518,24 +533,24 @@ void USlimeMoldSkeletonEditingTool::DrawDebugMouseInfo(const FInputDeviceRay& De
 	DrawDebugPoint(TargetWorld, WorldPosToDraw, 10.0f, Color, false, 0.1f);
 }
 
-USkeletonPoint* USlimeMoldSkeletonEditingTool::CreatePoint(const FInputDeviceRay& ClickPos)
+FSkeletonPoint& USlimeMoldSkeletonEditingTool::CreatePoint(const FInputDeviceRay& ClickPos, int32& NewPointID)
 {
 	FCollisionObjectQueryParams QueryParams(FCollisionObjectQueryParams::AllObjects);
 	FHitResult Result;
 	bool bHitWorld = TargetWorld->LineTraceSingleByObjectType(Result, ClickPos.WorldRay.Origin, ClickPos.WorldRay.PointAt(999999), QueryParams);
+	FSkeletonPoint NewPoint;
+	NewPointID = -1;
+
 	if (bHitWorld)
 	{
 		// Add a new point
-		USkeletonPoint* NewPoint = NewObject<USkeletonPoint>(TargetSlimeMoldActor);
-		//NewPoint->SetFlags(NewPoint->GetFlags() | RF_Transactional);
-		NewPoint->WorldPos = Result.Location;
-		NewPoint->WorldNormal = Result.ImpactNormal;
-		TargetSlimeMoldActor->SkeletonPoints.Add(NewPoint);
+		NewPoint.WorldPos = Result.Location;
+		NewPoint.WorldNormal = Result.ImpactNormal;
 
-		return NewPoint;
+		NewPointID = TargetActorComponent->SkeletonPoints.Add(NewPoint);
 	}
 
-	return nullptr;
+	return TargetActorComponent->SkeletonPoints[NewPointID];
 }
 
 void USlimeMoldSkeletonEditingTool::Msg(const FString& Msg)
@@ -588,9 +603,10 @@ void USlimeMoldSkeletonEditingTool::CreateGizmo()
 		{
 			GizmoPositionDelta = NewTransform.GetLocation() - PreviousGizmoTransform.GetLocation();
 
-			for (USkeletonPoint* Point : SelectedPoints)
+			for (int32 PointID : SelectedPointIDs)
 			{
-				Point->WorldPos += GizmoPositionDelta;
+				FSkeletonPoint& Point = TargetActorComponent->SkeletonPoints[PointID];
+				Point.WorldPos += GizmoPositionDelta;
 			}
 
 			PreviousGizmoTransform = NewTransform;
@@ -606,19 +622,20 @@ void USlimeMoldSkeletonEditingTool::CreateGizmo()
  */
 void USlimeMoldSkeletonEditingTool::Render(IToolsContextRenderAPI* RenderAPI)
 {
-	if (TargetSlimeMoldActor)
+	if (TargetActorComponent)
 	{
 		FPrimitiveDrawInterface* PDI = RenderAPI->GetPrimitiveDrawInterface();
 		
 		if (bDrawGhostPoint) 
 		{
-			PDI->DrawPoint(GhostPoint->WorldPos, FLinearColor(1.0f, 0.2f, 1.0f, 1.0f), Properties->DebugPointSize, SDPG_Foreground);
+			PDI->DrawPoint(GhostPoint.WorldPos, FLinearColor(1.0f, 0.2f, 1.0f, 1.0f), Properties->DebugPointSize, SDPG_Foreground);
 
 			if (bConnectGhostAndSelectedPoints)
 			{
-				for (USkeletonPoint* Point : SelectedPoints)
+				for (int32 PointID : SelectedPointIDs)
 				{
-					PDI->DrawLine(Point->WorldPos, GhostPoint->WorldPos,
+					FSkeletonPoint& Point = TargetActorComponent->SkeletonPoints[PointID];
+					PDI->DrawLine(Point.WorldPos, GhostPoint.WorldPos,
 						FLinearColor(1.0f, .5f, .5f, 1.0f), SDPG_Foreground, Properties->DebugLineThickness);
 				}
 			}
@@ -626,25 +643,30 @@ void USlimeMoldSkeletonEditingTool::Render(IToolsContextRenderAPI* RenderAPI)
 
 		if (bDrawGhostLines)
 		{
-			for (USkeletonPoint* Point : SelectedPoints)
+			for (int32 PointID : SelectedPointIDs)
 			{
-				PDI->DrawLine(Point->WorldPos, GhostPoint->WorldPos,
+				FSkeletonPoint& Point = TargetActorComponent->SkeletonPoints[PointID];
+				PDI->DrawLine(Point.WorldPos, GhostPoint.WorldPos,
 					FLinearColor(1.0f, .5f, .5f, 1.0f), SDPG_Foreground, Properties->DebugLineThickness);
 			}
 		}
 
 		// Render the skeleton with debug view
-		for (const FSkeletonLine& Line : TargetSlimeMoldActor->SkeletonLines)
+		for (const FSkeletonLine& Line : TargetActorComponent->SkeletonLines)
 		{
-			PDI->DrawLine(Line.Point1->WorldPos, Line.Point2->WorldPos,
+			FVector Point1Pos = TargetActorComponent->SkeletonPoints[Line.Point1ID].WorldPos;
+			FVector Point2Pos = TargetActorComponent->SkeletonPoints[Line.Point2ID].WorldPos;
+
+			PDI->DrawLine(Point1Pos, Point2Pos,
 				FLinearColor(0.0f, 1.0f, 1.0f, 1.0f), SDPG_Foreground, Properties->DebugLineThickness);
 		}
 
-		for (USkeletonPoint* Point : TargetSlimeMoldActor->SkeletonPoints)
+		for (int32 i = 0; i < TargetActorComponent->SkeletonPoints.Num(); i++)
 		{
-			FLinearColor PointColor = SelectedPoints.Contains(Point) ? FLinearColor::Red : FLinearColor::White;
+			FLinearColor PointColor = SelectedPointIDs.Contains(i) ? FLinearColor::Red : FLinearColor::White;
 
-			PDI->DrawPoint(Point->WorldPos, PointColor, Properties->DebugPointSize, SDPG_Foreground);
+			FSkeletonPoint& Point = TargetActorComponent->SkeletonPoints[i];
+			PDI->DrawPoint(Point.WorldPos, PointColor, Properties->DebugPointSize, SDPG_Foreground);
 		}
 
 	}

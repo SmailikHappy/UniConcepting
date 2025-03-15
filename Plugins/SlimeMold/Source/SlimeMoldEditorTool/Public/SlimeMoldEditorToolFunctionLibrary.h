@@ -5,7 +5,7 @@
 #include <CoreMinimal.h>
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "Structs.h"
-#include "SlimeMoldBase.h"
+#include "SlimeMoldSkeletonComponent.h"
 #include "SlimeMoldEditorToolFunctionLibrary.generated.h"
 
 
@@ -20,8 +20,6 @@ class SLIMEMOLDEDITORTOOL_API USlimeMoldEditorFuncLib : public UBlueprintFunctio
 
 public:
 
-	static bool SingleSlimeMoldObjectIsSelected();
-	static ASlimeMoldBase* GetSingleSelectedSlimeMoldObject();
-
-	static void GetPoints(ASlimeMoldBase* SlimeMold, TArray<USkeletonPoint*>& Array) { Array = SlimeMold->SkeletonPoints; }
+	static bool SingleActorWithSkeletonComponentIsSelected();
+	static USlimeMoldSkeletonComponent* GetSkeletonComponentFromSelectedActor();
 };
