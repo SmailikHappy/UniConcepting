@@ -82,16 +82,17 @@ void USlimeMoldSkeletonEditingTool::OnPropertyModified(UObject* PropertySet, FPr
 
 	if (PropertySet != Properties) return;
 
-	Property->GetName();
-
+	// "Delete points" button pressed
 	if (Property->GetName() == "bDeletePoints")
 	{
 		DeleteSelectedPoints();
 	}
+	// "Disconnect points" button pressed
 	else if (Property->GetName() == "bDisconnectPoints")
 	{
 		DisconnectSelectedPoints();
 	}
+	// "Split the line" button pressed
 	else if (Property->GetName() == "bSplitLineInMid")
 	{
 		TArray<FSkeletonLine> SelectedLines = GetSelectedLines();
@@ -144,7 +145,7 @@ void USlimeMoldSkeletonEditingTool::MousePressed()
 		}
 	}
 
-	// Connect points / create and connect
+	// Connect points / Create and connect
 	if (ShiftIsPressed && !CtrlIsPressed)
 	{
 		TSet<int32> PointsInRegion = GetPointIDsInMouseRegion(MouseRayWhenPressed, MouseRadiusCoefficent);
@@ -179,7 +180,7 @@ void USlimeMoldSkeletonEditingTool::MousePressed()
 			JustConnectedPointID = NewPointID;
 		}
 
-		// Chenge selection from selected points just connected one
+		// Change selection from selected points to just connected one if property stays
 		if (Properties->bChangeSelectionOnPointCreate)
 		{
 			DeselectAllPoints();
@@ -198,7 +199,7 @@ void USlimeMoldSkeletonEditingTool::MouseUpdate(const FInputDeviceRay& DevicePos
 	bDrawGhostPoint = false;
 	bDrawGhostLines = false;
 
-	// Multiple point selection with just mouse hovering around
+	// Multiple point selection
 	if (MouseIsPressed && !ShiftIsPressed && CtrlIsPressed)
 	{
 		TSet<int32> PointIDsInRegion = GetPointIDsInMouseRegion(DevicePos, MouseRadiusCoefficent);
@@ -209,7 +210,7 @@ void USlimeMoldSkeletonEditingTool::MouseUpdate(const FInputDeviceRay& DevicePos
 		}
 	}
 
-	// Point visual connection / snap
+	// Point visual potential connection / Line visual potential drawing 
 	if (!MouseIsPressed && ShiftIsPressed && !CtrlIsPressed)
 	{
 		bDrawGhostLines = true;
@@ -419,7 +420,7 @@ void USlimeMoldSkeletonEditingTool::DisconnectPoints(int32 Point1ID, int32 Point
 
 void USlimeMoldSkeletonEditingTool::DisconnectSelectedPoints()
 {
-	// UNOPTIMIZED -> Check on speeds
+	// UNOPTIMIZED
 	for (int32 Point1ID : SelectedPointIDs)
 	{
 		for (int32 Point2ID : SelectedPointIDs)
@@ -524,15 +525,6 @@ void USlimeMoldSkeletonEditingTool::SplitLine(const FSkeletonLine& Line)
 	TargetActorComponent->SkeletonLines.Remove(Line);
 }
 
-void USlimeMoldSkeletonEditingTool::DrawDebugMouseInfo(const FInputDeviceRay& DevicePos, FColor Color)
-{
-	if (!bDrawDebugMouseInfo) return;
-
-	FVector WorldPosToDraw;
-	FindRayHit(DevicePos.WorldRay, WorldPosToDraw);
-	DrawDebugPoint(TargetWorld, WorldPosToDraw, 10.0f, Color, false, 0.1f);
-}
-
 FSkeletonPoint& USlimeMoldSkeletonEditingTool::CreatePoint(const FInputDeviceRay& ClickPos, int32& NewPointID)
 {
 	FCollisionObjectQueryParams QueryParams(FCollisionObjectQueryParams::AllObjects);
@@ -553,13 +545,16 @@ FSkeletonPoint& USlimeMoldSkeletonEditingTool::CreatePoint(const FInputDeviceRay
 	return TargetActorComponent->SkeletonPoints[NewPointID];
 }
 
-void USlimeMoldSkeletonEditingTool::Msg(const FString& Msg)
+/*
+ * Debug drawing
+ */
+void USlimeMoldSkeletonEditingTool::DrawDebugMouseInfo(const FInputDeviceRay& DevicePos, FColor Color)
 {
-	FText Title = LOCTEXT("ActorInfoDialogTitle", "Info");
+	if (!bDrawDebugMouseInfo) return;
 
-	FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(Msg), Title);
-
-	UE_LOG(LogTemp, Warning, TEXT("some text lol"));
+	FVector WorldPosToDraw;
+	FindRayHit(DevicePos.WorldRay, WorldPosToDraw);
+	DrawDebugPoint(TargetWorld, WorldPosToDraw, 10.0f, Color, false, 0.1f);
 }
 
 /*

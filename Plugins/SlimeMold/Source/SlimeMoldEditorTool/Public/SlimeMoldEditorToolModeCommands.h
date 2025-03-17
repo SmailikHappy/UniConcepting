@@ -16,9 +16,6 @@ public:
 	virtual void RegisterCommands() override;
 	static TMap<FName, TArray<TSharedPtr<FUICommandInfo>>> GetCommands();
 
-
-	//TSharedPtr<FUICommandInfo> InteractiveTool;
-	//TSharedPtr<FUICommandInfo> ExampleTool;
 	TSharedPtr<FUICommandInfo> SkeletonEditingTool;
 	TSharedPtr<FUICommandInfo> MeshEditingTool;
 

@@ -1,16 +1,10 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "SlimeMoldMeshEditingTool.h"
-#include "InteractiveToolManager.h"
-#include "ToolBuilderUtil.h"
-#include "BaseBehaviors/ClickDragBehavior.h"
 
 // for raycast into World
 #include "CollisionQueryParams.h"
 #include "Engine/World.h"
-
-#include "SceneManagement.h"
-#include <Kismet/GameplayStatics.h>
 
 // Custom static functions
 #include "SlimeMoldEditorToolFunctionLibrary.h"
@@ -46,47 +40,23 @@ void USlimeMoldMeshEditingTool::Setup()
 
 	UInteractiveTool::Setup();
 
-	// Add default mouse input behavior
-	UClickDragInputBehavior* MouseBehavior = NewObject<UClickDragInputBehavior>();
-	MouseBehavior->Initialize(this);
-	AddInputBehavior(MouseBehavior);
-
-	// Create the property set and register it with the Tool
+	// Tool property set
 	ToolProperties = NewObject<USlimeMoldMeshEditingToolProperties>(this);
 	AddToolPropertySource(ToolProperties);
 
 	ToolProperties->RestoreProperties(this, "MeshEditingToolProperties");
 
+	// If there is a mesh property class assigned, create mesh property set of that class
 	if (ToolProperties->MeshPropertyClass)
 	{
-		// Create the property set and register it with the Tool
+		// Mesh property set
 		MeshProperties = NewObject<USlimeMoldMeshPropertyBase>(this, ToolProperties->MeshPropertyClass);
 		AddToolPropertySource(MeshProperties);
 
-		UE_LOG(LogTemp, Warning, TEXT("Mesh properties were created"));
+		UE_LOG(LogTemp, Display, TEXT("Mesh properties were created"));
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("Mesh editing tool has been initialized"));
-}
-
-void USlimeMoldMeshEditingTool::Shutdown(EToolShutdownType ShutdownType)
-{
-	switch (ShutdownType)
-	{
-	case EToolShutdownType::Completed:
-		UE_LOG(LogTemp, Warning, TEXT("Tool was completed"));
-		break;
-	case EToolShutdownType::Accept:
-		UE_LOG(LogTemp, Warning, TEXT("Tool was accepted"));
-		break;
-	case EToolShutdownType::Cancel:
-		UE_LOG(LogTemp, Warning, TEXT("Tool was cancelled"));
-		break;
-	default:
-		break;
-	}
-
-	//FMeshEditingToolBaseCustomization::MeshEditingToolBase.Reset();
+	UE_LOG(LogTemp, Display, TEXT("Mesh editing tool has been initialized"));
 }
 
 void USlimeMoldMeshEditingTool::SetWorld(UWorld* World)
@@ -124,21 +94,23 @@ void USlimeMoldMeshEditingTool::OnPropertyModified(UObject* PropertySet, FProper
 
 	if (PropertySet == ToolProperties)
 	{
+		// Generate mesh button has been pressed
 		if (Property->GetName() == "bGenerateMesh")
 		{
 			if (!MeshProperties)
 			{
-				UE_LOG(LogTemp, Warning, TEXT("Mesh properties are not available"));
+				UE_LOG(LogTemp, Display, TEXT("Mesh properties are not available"));
 				return;
 			}
 
 			FEditorScriptExecutionGuard ScriptGuard;
 			{
-				UE_LOG(LogTemp, Warning, TEXT("Generating mesh"));
+				UE_LOG(LogTemp, Display, TEXT("Generating mesh"));
 				TargetActorComponent->OnGenerateMesh.Broadcast(MeshProperties);
 			}
 		}
 
+		// Mesh property class has been assigned / changed
 		if (Property->GetName() == "MeshPropertyClass")
 		{
 			// Reload the tool, so that MeshProperties with the chosen class would be generated in the panel 
@@ -165,11 +137,6 @@ FInputRayHit USlimeMoldMeshEditingTool::FindRayHit(const FRay& WorldRay, FVector
 		return FInputRayHit(Result.Distance);
 	}
 	return FInputRayHit();
-}
-
-void USlimeMoldMeshEditingTool::Render(IToolsContextRenderAPI* RenderAPI)
-{
-	FPrimitiveDrawInterface* PDI = RenderAPI->GetPrimitiveDrawInterface();
 }
 
 #undef LOCTEXT_NAMESPACE

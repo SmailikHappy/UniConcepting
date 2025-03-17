@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+ // Copyright Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
@@ -25,7 +25,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
 	TArray<FSkeletonLine> SkeletonLines;
 
-
+	// The tool calls this event in an owner actor of this component when GenerateMesh button is pressed
 	UPROPERTY(BlueprintAssignable, EditDefaultsOnly)
 	FGenerateMeshEvent OnGenerateMesh;
 };

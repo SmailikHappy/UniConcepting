@@ -22,8 +22,6 @@ class USlimeMoldEditorToolEditorMode : public UEdMode
 public:
 	const static FEditorModeID EM_SlimeMoldEditorToolEditorModeId;
 
-	//static FString InteractiveToolName;
-	//static FString ExampleToolName;
 	static FString SkeletonEditingToolName;
 	static FString MeshEditingToolName;
 

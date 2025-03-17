@@ -20,12 +20,6 @@ void FSlimeMoldEditorToolModeCommands::RegisterCommands()
 {
 	TArray<TSharedPtr<FUICommandInfo>>& ToolCommands = Commands.FindOrAdd(NAME_Default);
 
-	/*UI_COMMAND(InteractiveTool, "Measure distance", "Measures distance between 2 points (click to set the origin, shift-click to set the end-point)", EUserInterfaceActionType::ToggleButton, FInputChord());
-	ToolCommands.Add(InteractiveTool);*/
-
-	//UI_COMMAND(ExampleTool, "Example Tool", "An example tool that does nothing", EUserInterfaceActionType::ToggleButton, FInputChord());
-	//ToolCommands.Add(ExampleTool);
-
 	UI_COMMAND(SkeletonEditingTool, "Skeleton", "This tool manages the skeleton of the goop", EUserInterfaceActionType::ToggleButton, FInputChord());
 	ToolCommands.Add(SkeletonEditingTool);
 

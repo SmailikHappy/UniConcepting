@@ -12,10 +12,6 @@
 
 // Adding gizmo to the world
 #include "BaseGizmos/TransformGizmoUtil.h"
-#include "InteractiveToolObjects.h"
-
-// Buttons in detail panel
-#include "Components/Button.h"
 
 #include "SlimeMoldMeshEditingTool.generated.h"
 
@@ -57,9 +53,9 @@ public:
 
 
 /**
- * Base class for properties, has to be instantiated in the main Tool porperties, 
- * The object of this class (with a lot of variables) will be passed to "generate mesh function"
- * Then read in blueprint
+ * Base class for mesh properties, has to be instantiated by the user, 
+ * The object of this class (with a lot of variables) will be passed to "generate mesh" event
+ * So that the user can access those variables from a blueprint
  */
 UCLASS(Transient, Blueprintable)
 class SLIMEMOLDEDITORTOOL_API USlimeMoldMeshPropertyBase : public UInteractiveToolPropertySet
@@ -86,24 +82,24 @@ public:
 	virtual void SetWorld(UWorld* World);
 
 	/** UInteractiveTool overrides */
-	virtual void Setup() override;
-	virtual void Shutdown(EToolShutdownType ShutdownType) override;
-	virtual void OnPropertyModified(UObject* PropertySet, FProperty* Property) override;
-	virtual void Render(IToolsContextRenderAPI* RenderAPI) override;
+	void Setup() override;
+	void OnPropertyModified(UObject* PropertySet, FProperty* Property) override;
 
 
 	/** IClickDragBehaviorTarget implementation */
-	virtual FInputRayHit CanBeginClickDragSequence(const FInputDeviceRay& PressPos) override;
-	virtual void OnClickPress(const FInputDeviceRay& PressPos) override;
-	virtual void OnClickRelease(const FInputDeviceRay& ReleasePos) override {}
-	virtual void OnTerminateDragSequence() override {}
-	virtual void OnClickDrag(const FInputDeviceRay& DragPos) override {}
+	FInputRayHit CanBeginClickDragSequence(const FInputDeviceRay& PressPos) override;
+	void OnClickPress(const FInputDeviceRay& PressPos) override;
+	void OnClickRelease(const FInputDeviceRay& ReleasePos) override {}
+	void OnTerminateDragSequence() override {}
+	void OnClickDrag(const FInputDeviceRay& DragPos) override {}
 
 protected:
-	/** Properties of the tool are stored here */
+
+	/** Tool properties */
 	UPROPERTY()
 	TObjectPtr<USlimeMoldMeshEditingToolProperties> ToolProperties;
 
+	/** Mesh properties */
 	UPROPERTY()
 	TObjectPtr<USlimeMoldMeshPropertyBase> MeshProperties;
 
@@ -111,7 +107,6 @@ protected:
 
 	UWorld* TargetWorld = nullptr;		// target World we will raycast into
 	USlimeMoldSkeletonComponent* TargetActorComponent = nullptr;
-	bool bSpawnProperties = false;
 
 	FInputRayHit FindRayHit(const FRay& WorldRay, FVector& HitPos);		// raycasts into World
 };
