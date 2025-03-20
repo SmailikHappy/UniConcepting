@@ -45,10 +45,6 @@ class SLIMEMOLDEDITORTOOL_API USlimeMoldSkeletonEditingToolProperties : public U
 public:
 	USlimeMoldSkeletonEditingToolProperties() {}
 
-	UPROPERTY(EditAnywhere, Category = "yikyyy")
-	int into;
-
-
 	/** Debug draw lines */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Default")
 	float DebugLineThickness = 2.0f;
@@ -62,16 +58,16 @@ public:
 	float SelectionMaxRadiusThreshold = 1.0f;
 
 	/** Variable listener TO REDO */
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Default")
-	bool bDeletePoints;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Button")
+	bool bDeletePoints = false;
 
 	/** Variable listener TO REDO*/
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Default")
-	bool bDisconnectPoints;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Button")
+	bool bDisconnectPoints = false;
 
 	/** Variable listener TO REDO */
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Default")
-	bool bSplitLineInMid;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Button")
+	bool bSplitLineInMid = false;
 
 	/** Decides whether we shall change the selection to just created point (deselect all the points that were selected THEN select only the point that was just created) */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Default")
@@ -151,7 +147,6 @@ protected:
 	FInputRayHit FindRayHit(const FRay& WorldRay, FVector& HitPos);
 
 	FSkeletonPoint& CreatePoint(const FInputDeviceRay& ClickPos, int32& NewPointID);
-	void Msg(const FString& Msg);
 
 private:
 	/** Utility functions */
@@ -162,8 +157,11 @@ private:
 	void HideGizmo();
 	void CreateGizmo();
 	void DestroyGizmo();
-	FTransform PreviousGizmoTransform = FTransform::Identity;
+
+	UPROPERTY()
 	UCombinedTransformGizmo* TransformGizmo = nullptr;
+
+	FTransform PreviousGizmoTransform = FTransform::Identity;
 	FVector GizmoPositionDelta = FVector::ZeroVector;
 
 	int UniqueID = 0;
@@ -181,8 +179,12 @@ protected:
 	FInputDeviceRay MouseRayWhenPressed;
 	FInputDeviceRay MouseRayWhenReleased;
 
+	UPROPERTY()
 	UWorld* TargetWorld = nullptr;
+	
+	UPROPERTY()
 	USlimeMoldSkeletonComponent* TargetActorComponent = nullptr;
+	
 	TSet<int32> SelectedPointIDs;		// set ensures no duplicates
 	 
 	bool bDrawGhostPoint = false;

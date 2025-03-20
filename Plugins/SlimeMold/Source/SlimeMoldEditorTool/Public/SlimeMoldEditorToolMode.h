@@ -26,7 +26,7 @@ public:
 	static FString MeshEditingToolName;
 
 	USlimeMoldEditorToolEditorMode();
-	virtual ~USlimeMoldEditorToolEditorMode();
+	virtual ~USlimeMoldEditorToolEditorMode() override;
 
 	/** UEdMode interface */
 	virtual void Enter() override;

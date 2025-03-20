@@ -29,28 +29,6 @@ public:
 };
 
 
-/**
- * Property sets
- */
-UCLASS(Config = EditorPerProjectUserSettings)
-class SLIMEMOLDEDITORTOOL_API USlimeMoldMeshEditingToolProperties : public UInteractiveToolPropertySet
-{
-	GENERATED_BODY()
-
-public:
-	USlimeMoldMeshEditingToolProperties() {}
-
-	UPROPERTY(EditAnywhere, Category = "yikes")
-	float flaot;
-
-	UPROPERTY(EditAnywhere, Category = "Default")
-	bool bGenerateMesh;
-
-	// Class of properties that will be passed via function to generate mesh
-	UPROPERTY(EditAnywhere, Category = "Default")
-	TSubclassOf<USlimeMoldMeshPropertyBase> MeshPropertyClass;
-};
-
 
 /**
  * Base class for mesh properties, has to be instantiated by the user, 
@@ -66,6 +44,26 @@ public:
 	USlimeMoldMeshPropertyBase() {} 
 };
 
+
+
+/**
+ * Property sets
+ */
+UCLASS(Config = EditorPerProjectUserSettings)
+class SLIMEMOLDEDITORTOOL_API USlimeMoldMeshEditingToolProperties : public UInteractiveToolPropertySet
+{
+	GENERATED_BODY()
+
+public:
+	USlimeMoldMeshEditingToolProperties() {}
+
+	UPROPERTY(EditAnywhere, Category = "Button")
+	bool bGenerateMesh = false;
+
+	// Class of properties that will be passed via function to generate mesh
+	UPROPERTY(EditAnywhere, Category = "Default")
+	TSubclassOf<USlimeMoldMeshPropertyBase> MeshPropertyClass;
+};
 
 
 
@@ -105,7 +103,10 @@ protected:
 
 protected:
 
+	UPROPERTY()
 	UWorld* TargetWorld = nullptr;		// target World we will raycast into
+
+	UPROPERTY()
 	USlimeMoldSkeletonComponent* TargetActorComponent = nullptr;
 
 	FInputRayHit FindRayHit(const FRay& WorldRay, FVector& HitPos);		// raycasts into World
