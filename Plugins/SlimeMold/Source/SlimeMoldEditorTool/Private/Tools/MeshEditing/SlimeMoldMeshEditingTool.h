@@ -82,6 +82,7 @@ public:
 	/** UInteractiveTool overrides */
 	void Setup() override;
 	void OnPropertyModified(UObject* PropertySet, FProperty* Property) override;
+	void Shutdown(EToolShutdownType ShutdownType) override;
 
 
 	/** IClickDragBehaviorTarget implementation */

@@ -53,6 +53,8 @@ void USlimeMoldMeshEditingTool::Setup()
 		MeshProperties = NewObject<USlimeMoldMeshPropertyBase>(this, ToolProperties->MeshPropertyClass);
 		AddToolPropertySource(MeshProperties);
 
+		MeshProperties->RestoreProperties(this, "MeshEditingMeshProperties");
+
 		UE_LOG(LogTemp, Display, TEXT("Mesh properties were created"));
 	}
 
@@ -122,6 +124,14 @@ void USlimeMoldMeshEditingTool::OnPropertyModified(UObject* PropertySet, FProper
 
 			return;
 		}
+	}
+}
+
+void USlimeMoldMeshEditingTool::Shutdown(EToolShutdownType ShutdownType)
+{
+	if (MeshProperties)
+	{
+		MeshProperties->SaveProperties(this, "MeshEditingMeshProperties");
 	}
 }
 
