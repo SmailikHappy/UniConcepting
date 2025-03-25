@@ -14,7 +14,13 @@ struct SLIMEMOLD_API FSkeletonPoint
 	FVector WorldPos = FVector::ZeroVector;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FVector WorldNormal = FVector::ZAxisVector;
+	float Thickness = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Clusterization = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Veinness = 0.0f;
 };
 
 

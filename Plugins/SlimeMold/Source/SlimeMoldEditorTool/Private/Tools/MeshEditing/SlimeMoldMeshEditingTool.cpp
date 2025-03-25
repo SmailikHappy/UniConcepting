@@ -2,6 +2,8 @@
 
 #include "SlimeMoldMeshEditingTool.h"
 
+#include "SlimeMoldMeshEditingCustomization.h"
+
 // for raycast into World
 #include "CollisionQueryParams.h"
 #include "Engine/World.h"
@@ -45,6 +47,14 @@ void USlimeMoldMeshEditingTool::Setup()
 	AddToolPropertySource(ToolProperties);
 
 	ToolProperties->RestoreProperties(this, "MeshEditingToolProperties");
+
+	// Register the custom detail customization
+	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
+
+	PropertyModule.RegisterCustomClassLayout(
+		USlimeMoldMeshEditingToolProperties::StaticClass()->GetFName(),
+		FOnGetDetailCustomizationInstance::CreateStatic(&FSlimeMoldMeshEditingCustomization::MakeInstance)
+	);
 
 	// If there is a mesh property class assigned, create mesh property set of that class
 	if (ToolProperties->MeshPropertyClass)
@@ -96,22 +106,6 @@ void USlimeMoldMeshEditingTool::OnPropertyModified(UObject* PropertySet, FProper
 
 	if (PropertySet == ToolProperties)
 	{
-		// Generate mesh button has been pressed
-		if (Property->GetName() == "bGenerateMesh")
-		{
-			if (!MeshProperties)
-			{
-				UE_LOG(LogTemp, Display, TEXT("Mesh properties are not available"));
-				return;
-			}
-
-			FEditorScriptExecutionGuard ScriptGuard;
-			{
-				UE_LOG(LogTemp, Display, TEXT("Generating mesh"));
-				TargetActorComponent->OnGenerateMesh.Broadcast(MeshProperties);
-			}
-		}
-
 		// Mesh property class has been assigned / changed
 		if (Property->GetName() == "MeshPropertyClass")
 		{
@@ -124,6 +118,53 @@ void USlimeMoldMeshEditingTool::OnPropertyModified(UObject* PropertySet, FProper
 
 			return;
 		}
+
+		if (Property->GetName() == "bGenerateMesh" || Property->GetName() == "bGenerateDebugInfo" ||
+			Property->GetName() == "bAssignMaterials" || Property->GetName() == "bClearMesh")
+		{
+			if (!MeshProperties)
+			{
+				USlimeMoldEditorFuncLib::WarnUserDialog("Generation aborted", "Mesh properties are not set\nChoose property class");
+				return;
+			}
+		}
+
+		// Generate mesh button has been pressed
+		if (Property->GetName() == "bGenerateMesh")
+		{
+			FEditorScriptExecutionGuard ScriptGuard;
+			{
+				UE_LOG(LogTemp, Display, TEXT("Generating mesh"));
+				TargetActorComponent->OnGenerateMesh.Broadcast(MeshProperties);
+			}
+		}
+		// Generate debug info button has been pressed
+		else if (Property->GetName() == "bGenerateDebugInfo")
+		{
+			FEditorScriptExecutionGuard ScriptGuard;
+			{
+				UE_LOG(LogTemp, Display, TEXT("Generating debug info"));
+				TargetActorComponent->OnGenerateDebugInfo.Broadcast(MeshProperties);
+			}
+		}
+		// Assign materials button has been pressed
+		else if (Property->GetName() == "bAssignMaterials")
+		{
+			FEditorScriptExecutionGuard ScriptGuard;
+			{
+				UE_LOG(LogTemp, Display, TEXT("Assigning materials"));
+				TargetActorComponent->OnAssignMaterials.Broadcast(MeshProperties);
+			}
+		}
+		// Clear mesh button has been pressed
+		else if (Property->GetName() == "bClearMesh")
+		{
+			FEditorScriptExecutionGuard ScriptGuard;
+			{
+				UE_LOG(LogTemp, Display, TEXT("Clearing mesh"));
+				TargetActorComponent->OnClearMesh.Broadcast(MeshProperties);
+			}
+		}
 	}
 }
 
@@ -132,6 +173,24 @@ void USlimeMoldMeshEditingTool::Shutdown(EToolShutdownType ShutdownType)
 	if (MeshProperties)
 	{
 		MeshProperties->SaveProperties(this, "MeshEditingMeshProperties");
+	}
+}
+
+void USlimeMoldMeshEditingTool::OnTick(float DeltaTime)
+{
+	// Alway check if we are working with the right actor and the actor is valid
+	if (USlimeMoldEditorFuncLib::SingleActorWithSkeletonComponentIsSelected())
+	{
+		if (TargetActorComponent != USlimeMoldEditorFuncLib::GetSkeletonComponentFromSelectedActor())
+		{
+			// Reload the tool
+			GetToolManager()->DeactivateTool(EToolSide::Left, EToolShutdownType::Completed);
+			GetToolManager()->ActivateTool(EToolSide::Left);
+		}
+	}
+	else
+	{
+		GetToolManager()->DeactivateTool(EToolSide::Left, EToolShutdownType::Completed);
 	}
 }
 

@@ -33,7 +33,6 @@ public:
 	virtual UInteractiveTool* BuildTool(const FToolBuilderState& SceneState) const override;
 };
 
-
 /**
  * Property set for every child tool
  */
@@ -45,33 +44,66 @@ class SLIMEMOLDEDITORTOOL_API USlimeMoldSkeletonEditingToolProperties : public U
 public:
 	USlimeMoldSkeletonEditingToolProperties() {}
 
-	/** Debug draw lines */
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Default")
-	float DebugLineThickness = 2.0f;
+	/** Point thickness of the of the main vein */
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Point data")
+	float PointThickness = 1.0f;
 
-	/** Debug draw points */
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Default")
-	float DebugPointSize = 10.0f;
+	/** The amount of clusters (not a number) to generate from the line with this point */
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Point data")
+	float PointClusterization = 1.0f;
 
-	/** Mouse 'radius' point detection threshlod */
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Default")
-	float SelectionMaxRadiusThreshold = 1.0f;
+	/** Value that corresponds to vein producing */
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Point data")
+	float PointVeinness = 1.0f;
 
-	/** Variable listener TO REDO */
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Button")
+
+
+	UPROPERTY(EditAnywhere, Category = "Buttons")
 	bool bDeletePoints = false;
 
-	/** Variable listener TO REDO*/
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Button")
+	UPROPERTY(EditAnywhere, Category = "Buttons")
 	bool bDisconnectPoints = false;
 
-	/** Variable listener TO REDO */
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Button")
-	bool bSplitLineInMid = false;
+	UPROPERTY(EditAnywhere, Category = "Buttons")
+	bool bSplitLine = false;
+
+	
+	
+	/** Mouse 'radius' point detection threshlod */
+	UPROPERTY(EditAnywhere, Category = "Editor settings")
+	float SelectionRadiusThreshold = 1.0f;
 
 	/** Decides whether we shall change the selection to just created point (deselect all the points that were selected THEN select only the point that was just created) */
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Default")
+	UPROPERTY(EditAnywhere, Category = "Editor settings")
 	bool bChangeSelectionOnPointCreate = true;
+
+	/** Point color with minimal veinness */
+	UPROPERTY(EditAnywhere, Category = "Editor settings")
+	FLinearColor PointColorMinVeinness = FLinearColor::Black;
+
+	/** Point color with maximal veinness */
+	UPROPERTY(EditAnywhere, Category = "Editor settings")
+	FLinearColor PointColorMaxVeinness = FLinearColor::White;
+
+	/** Point color when selected */
+	UPROPERTY(EditAnywhere, Category = "Editor settings")
+	FLinearColor PointColorSelected = FLinearColor::Red;
+
+	/** Ghost point color */
+	UPROPERTY(EditAnywhere, Category = "Editor settings")
+	FLinearColor GhostPointColor = FLinearColor(1.0f, 0.2f, 1.0f, 1.0f);
+
+	/** Line default color */
+	UPROPERTY(EditAnywhere, Category = "Editor settings")
+	FLinearColor LineColor = FLinearColor(0.0f, 1.0f, 1.0f, 1.0f);
+
+	/** Line color when selected */
+	UPROPERTY(EditAnywhere, Category = "Editor settings")
+	FLinearColor LineColorSelected = FLinearColor(1.0f, 0.5f, 0.5f, 1.0f);
+
+	/** Ghost line color */
+	UPROPERTY(EditAnywhere, Category = "Editor settings")
+	FLinearColor GhostLineColor = FLinearColor(1.0f, 0.5f, 0.5f, 1.0f);
 };
 
 
@@ -92,6 +124,7 @@ public:
 	void OnPropertyModified(UObject* PropertySet, FProperty* Property) override;
 	void Shutdown(EToolShutdownType ShutdownType) override;
 	void Render(IToolsContextRenderAPI* RenderAPI) override;
+	void OnTick(float DeltaTime) override;
 
 
 	/** IModifierToggleBehaviorTarget implementation */
@@ -134,15 +167,12 @@ protected:
 	void DisconnectSelectedPoints();
 	void SplitLine(const FSkeletonLine& line);
 
-
-
-	const float MouseRadiusCoefficent = 0.002f;
 	bool bDrawDebugMouseInfo = false;
 
 
 	/** Helper functions */
 	TArray<FSkeletonLine> GetSelectedLines();
-	TSet<int32> GetPointIDsInMouseRegion(const FInputDeviceRay& DevicePos, float RayRadiusCoefficent);
+	TSet<int32> GetPointIDsInMouseRegion(const FInputDeviceRay& DevicePos);
 	FSkeletonPoint& GetClosestPointToMouse(const FInputDeviceRay& DevicePos, const TSet<int32>& SetOfPointIDs, int32& ClosestPointID);
 	FInputRayHit FindRayHit(const FRay& WorldRay, FVector& HitPos);
 

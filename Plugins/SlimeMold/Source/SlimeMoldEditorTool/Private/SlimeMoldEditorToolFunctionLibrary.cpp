@@ -40,3 +40,8 @@ USlimeMoldSkeletonComponent* USlimeMoldEditorFuncLib::GetSkeletonComponentFromSe
 
 	return nullptr;
 }
+
+void USlimeMoldEditorFuncLib::WarnUserDialog(const FString& Title, const FString& Message)
+{
+	FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(Message), FText::FromString(Title));
+}

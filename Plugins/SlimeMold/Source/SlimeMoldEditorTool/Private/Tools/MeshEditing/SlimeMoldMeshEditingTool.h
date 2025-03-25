@@ -60,6 +60,16 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Button")
 	bool bGenerateMesh = false;
 
+
+	UPROPERTY(EditAnywhere, Category = "Button")
+	bool bGenerateDebugInfo = false;
+
+	UPROPERTY(EditAnywhere, Category = "Button")
+	bool bAssignMaterials = false;
+
+	UPROPERTY(EditAnywhere, Category = "Button")
+	bool bClearMesh = false;
+
 	// Class of properties that will be passed via function to generate mesh
 	UPROPERTY(EditAnywhere, Category = "Default")
 	TSubclassOf<USlimeMoldMeshPropertyBase> MeshPropertyClass;
@@ -83,6 +93,7 @@ public:
 	void Setup() override;
 	void OnPropertyModified(UObject* PropertySet, FProperty* Property) override;
 	void Shutdown(EToolShutdownType ShutdownType) override;
+	void OnTick(float DeltaTime) override;
 
 
 	/** IClickDragBehaviorTarget implementation */

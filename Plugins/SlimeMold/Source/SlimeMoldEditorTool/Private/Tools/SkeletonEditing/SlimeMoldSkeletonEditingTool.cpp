@@ -7,6 +7,7 @@
 #include "BaseBehaviors/ClickDragBehavior.h"
 #include "BaseBehaviors/MouseHoverBehavior.h"
 
+#include "SlimeMoldSkeletonEditingCustomization.h"
 
 // for raycast into World
 #include "CollisionQueryParams.h"
@@ -82,24 +83,50 @@ void USlimeMoldSkeletonEditingTool::OnPropertyModified(UObject* PropertySet, FPr
 
 	if (PropertySet != Properties) return;
 
-	// "Delete points" button pressed
-	if (Property->GetName() == "bDeletePoints")
+	// Buttons
 	{
-		DeleteSelectedPoints();
-	}
-	// "Disconnect points" button pressed
-	else if (Property->GetName() == "bDisconnectPoints")
-	{
-		DisconnectSelectedPoints();
-	}
-	// "Split the line" button pressed
-	else if (Property->GetName() == "bSplitLineInMid")
-	{
-		TArray<FSkeletonLine> SelectedLines = GetSelectedLines();
-
-		for (FSkeletonLine LineToSplit : SelectedLines)
+		// "Delete points" button pressed
+		if (Property->GetName() == "bDeletePoints")
 		{
-			SplitLine(LineToSplit);
+			DeleteSelectedPoints();
+		}
+		// "Disconnect points" button pressed
+		else if (Property->GetName() == "bDisconnectPoints")
+		{
+			DisconnectSelectedPoints();
+		}
+		// "Split the line" button pressed
+		else if (Property->GetName() == "bSplitLine")
+		{
+			TArray<FSkeletonLine> SelectedLines = GetSelectedLines();
+
+			for (FSkeletonLine LineToSplit : SelectedLines)
+			{
+				SplitLine(LineToSplit);
+			}
+		}
+	}
+
+	// Point data update
+	if (Property->GetName() == "PointThickness")
+	{
+		for (int32 PointID : SelectedPointIDs)
+		{
+			TargetActorComponent->SkeletonPoints[PointID].Thickness = Properties->PointThickness;
+		}
+	}
+	else if (Property->GetName() == "PointClusterization")
+	{
+		for (int32 PointID : SelectedPointIDs)
+		{
+			TargetActorComponent->SkeletonPoints[PointID].Clusterization = Properties->PointClusterization;
+		}
+	}
+	else if (Property->GetName() == "PointVeinness")
+	{
+		for (int32 PointID : SelectedPointIDs)
+		{
+			TargetActorComponent->SkeletonPoints[PointID].Veinness = Properties->PointVeinness;
 		}
 	}
 }
@@ -121,7 +148,7 @@ void USlimeMoldSkeletonEditingTool::MousePressed()
 	{
 		DeselectAllPoints();
 
-		TSet<int32> PointsInRegion = GetPointIDsInMouseRegion(MouseRayWhenPressed, MouseRadiusCoefficent);
+		TSet<int32> PointsInRegion = GetPointIDsInMouseRegion(MouseRayWhenPressed);
 
 		if (!PointsInRegion.IsEmpty())
 		{
@@ -134,7 +161,7 @@ void USlimeMoldSkeletonEditingTool::MousePressed()
 	// Select another point
 	if (!ShiftIsPressed && CtrlIsPressed)
 	{
-		TSet<int32> PointIDsInRegion = GetPointIDsInMouseRegion(MouseRayWhenPressed, MouseRadiusCoefficent);
+		TSet<int32> PointIDsInRegion = GetPointIDsInMouseRegion(MouseRayWhenPressed);
 
 		// Select the closest point
 		if (!PointIDsInRegion.IsEmpty())
@@ -148,7 +175,7 @@ void USlimeMoldSkeletonEditingTool::MousePressed()
 	// Connect points / Create and connect
 	if (ShiftIsPressed && !CtrlIsPressed)
 	{
-		TSet<int32> PointsInRegion = GetPointIDsInMouseRegion(MouseRayWhenPressed, MouseRadiusCoefficent);
+		TSet<int32> PointsInRegion = GetPointIDsInMouseRegion(MouseRayWhenPressed);
 
 		int32 JustConnectedPointID = -1;
 
@@ -202,7 +229,7 @@ void USlimeMoldSkeletonEditingTool::MouseUpdate(const FInputDeviceRay& DevicePos
 	// Multiple point selection
 	if (MouseIsPressed && !ShiftIsPressed && CtrlIsPressed)
 	{
-		TSet<int32> PointIDsInRegion = GetPointIDsInMouseRegion(DevicePos, MouseRadiusCoefficent);
+		TSet<int32> PointIDsInRegion = GetPointIDsInMouseRegion(DevicePos);
 		
 		for (int32 PointID : PointIDsInRegion)
 		{
@@ -214,7 +241,7 @@ void USlimeMoldSkeletonEditingTool::MouseUpdate(const FInputDeviceRay& DevicePos
 	if (!MouseIsPressed && ShiftIsPressed && !CtrlIsPressed)
 	{
 		bDrawGhostLines = true;
-		TSet<int32> PointsInRegion = GetPointIDsInMouseRegion(DevicePos, MouseRadiusCoefficent);
+		TSet<int32> PointsInRegion = GetPointIDsInMouseRegion(DevicePos);
 
 		if (!PointsInRegion.IsEmpty())
 		{
@@ -248,10 +275,15 @@ void USlimeMoldSkeletonEditingTool::AssignProperties()
 	Properties = NewObject<USlimeMoldSkeletonEditingToolProperties>(this);
 	AddToolPropertySource(Properties);
 
-	UE_LOG(LogTemp, Warning, TEXT("Properties assigned"));
+	UE_LOG(LogTemp, Display, TEXT("Skeleton properties have been assigned"));
 
 	// Register the custom detail customization
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
+
+	PropertyModule.RegisterCustomClassLayout(
+		USlimeMoldSkeletonEditingToolProperties::StaticClass()->GetFName(),
+		FOnGetDetailCustomizationInstance::CreateStatic(&FSlimeMoldSkeletonEditingCustomization::MakeInstance)
+	);
 }
 
 FInputRayHit USlimeMoldSkeletonEditingTool::FindRayHit(const FRay& WorldRay, FVector& HitPos)
@@ -309,10 +341,15 @@ void USlimeMoldSkeletonEditingTool::OnUpdateModifierState(int ModifierID, bool b
  */
 void USlimeMoldSkeletonEditingTool::SelectPoint(int32 PointID)
 {
+	FSkeletonPoint& Point = TargetActorComponent->SkeletonPoints[PointID];
 	if (SelectedPointIDs.IsEmpty())
 	{
-		ShowGizmo(FTransform(TargetActorComponent->SkeletonPoints[PointID].WorldPos));
+		ShowGizmo(FTransform(Point.WorldPos));
 	}
+
+	Properties->PointThickness = Point.Thickness;
+	Properties->PointClusterization = Point.Clusterization;
+	Properties->PointVeinness = Point.Veinness;
 
 	SelectedPointIDs.Add(PointID);
 }
@@ -448,7 +485,7 @@ TArray<FSkeletonLine> USlimeMoldSkeletonEditingTool::GetSelectedLines()
 	return LineArray;
 }
 
-TSet<int32> USlimeMoldSkeletonEditingTool::GetPointIDsInMouseRegion(const FInputDeviceRay& DevicePos, float RayRadiusCoefficent)
+TSet<int32> USlimeMoldSkeletonEditingTool::GetPointIDsInMouseRegion(const FInputDeviceRay& DevicePos)
 {
 	TSet<int32> PointsInRegion;
 
@@ -467,7 +504,7 @@ TSet<int32> USlimeMoldSkeletonEditingTool::GetPointIDsInMouseRegion(const FInput
 
 		float OneMinusDotProduct = 1.0f - FVector::DotProduct(DirectionToPoint, DevicePos.WorldRay.Direction);
 
-		if (OneMinusDotProduct / (dotProductK * dotProductK * dotProductK) < RayRadiusCoefficent)
+		if (OneMinusDotProduct / (dotProductK * dotProductK * dotProductK) < Properties->SelectionRadiusThreshold * 0.001f)
 		{
 			PointsInRegion.Add(PointID);
 		}
@@ -506,7 +543,9 @@ void USlimeMoldSkeletonEditingTool::SplitLine(const FSkeletonLine& Line)
 	FSkeletonPoint& LinePoint2 = TargetActorComponent->SkeletonPoints[Line.Point2ID];
 
 	NewPoint.WorldPos = (LinePoint1.WorldPos + LinePoint2.WorldPos) / 2.0f;
-	NewPoint.WorldNormal = (LinePoint1.WorldNormal + LinePoint2.WorldNormal) / 2.0f;
+	NewPoint.Thickness = (LinePoint1.Thickness + LinePoint2.Thickness) / 2.0f;
+	NewPoint.Clusterization = (LinePoint1.Clusterization + LinePoint2.Clusterization) / 2.0f;
+	NewPoint.Veinness = (LinePoint1.Veinness + LinePoint2.Veinness) / 2.0f;	
 
 	int32 NewPointID = TargetActorComponent->SkeletonPoints.Add(NewPoint);
 
@@ -537,7 +576,6 @@ FSkeletonPoint& USlimeMoldSkeletonEditingTool::CreatePoint(const FInputDeviceRay
 	{
 		// Add a new point
 		NewPoint.WorldPos = Result.Location;
-		NewPoint.WorldNormal = Result.ImpactNormal;
 
 		NewPointID = TargetActorComponent->SkeletonPoints.Add(NewPoint);
 	}
@@ -621,49 +659,62 @@ void USlimeMoldSkeletonEditingTool::Render(IToolsContextRenderAPI* RenderAPI)
 	{
 		FPrimitiveDrawInterface* PDI = RenderAPI->GetPrimitiveDrawInterface();
 		
+		// Draw the ghost point
 		if (bDrawGhostPoint) 
 		{
-			PDI->DrawPoint(GhostPoint.WorldPos, FLinearColor(1.0f, 0.2f, 1.0f, 1.0f), Properties->DebugPointSize, SDPG_Foreground);
-
-			if (bConnectGhostAndSelectedPoints)
-			{
-				for (int32 PointID : SelectedPointIDs)
-				{
-					FSkeletonPoint& Point = TargetActorComponent->SkeletonPoints[PointID];
-					PDI->DrawLine(Point.WorldPos, GhostPoint.WorldPos,
-						FLinearColor(1.0f, .5f, .5f, 1.0f), SDPG_Foreground, Properties->DebugLineThickness);
-				}
-			}
+			PDI->DrawPoint(GhostPoint.WorldPos, Properties->GhostPointColor, 10.0f, SDPG_Foreground);
 		}
 
-		if (bDrawGhostLines)
+		// Draw the ghost lines
+		if (bDrawGhostLines || (bConnectGhostAndSelectedPoints && bDrawGhostPoint))
 		{
 			for (int32 PointID : SelectedPointIDs)
 			{
 				FSkeletonPoint& Point = TargetActorComponent->SkeletonPoints[PointID];
 				PDI->DrawLine(Point.WorldPos, GhostPoint.WorldPos,
-					FLinearColor(1.0f, .5f, .5f, 1.0f), SDPG_Foreground, Properties->DebugLineThickness);
+					Properties->GhostLineColor, SDPG_Foreground, 1.0f);
 			}
 		}
 
 		// Render the skeleton with debug view
 		for (const FSkeletonLine& Line : TargetActorComponent->SkeletonLines)
 		{
+			TArray<FSkeletonLine> SelectedLines = GetSelectedLines();
+
 			FVector Point1Pos = TargetActorComponent->SkeletonPoints[Line.Point1ID].WorldPos;
 			FVector Point2Pos = TargetActorComponent->SkeletonPoints[Line.Point2ID].WorldPos;
 
-			PDI->DrawLine(Point1Pos, Point2Pos,
-				FLinearColor(0.0f, 1.0f, 1.0f, 1.0f), SDPG_Foreground, Properties->DebugLineThickness);
+			FLinearColor LineColor = SelectedLines.Contains(Line) ? Properties->LineColorSelected : Properties->LineColor;
+
+			PDI->DrawLine(Point1Pos, Point2Pos,	LineColor, SDPG_Foreground, 1.0f);
 		}
 
 		for (int32 i = 0; i < TargetActorComponent->SkeletonPoints.Num(); i++)
 		{
-			FLinearColor PointColor = SelectedPointIDs.Contains(i) ? FLinearColor::Red : FLinearColor::White;
-
 			FSkeletonPoint& Point = TargetActorComponent->SkeletonPoints[i];
-			PDI->DrawPoint(Point.WorldPos, PointColor, Properties->DebugPointSize, SDPG_Foreground);
-		}
+			FLinearColor PointColor = SelectedPointIDs.Contains(i) ? Properties->PointColorSelected :
+				FMath::Lerp( Properties->PointColorMinVeinness, Properties->PointColorMaxVeinness, (1.0f - 1.0f / (FMath::Max<float>(Point.Clusterization, 0.001f) + 1.0f)));
 
+			PDI->DrawPoint(Point.WorldPos, PointColor, Point.Thickness + 10.0f, SDPG_Foreground);
+		}
+	}
+}
+
+void USlimeMoldSkeletonEditingTool::OnTick(float DeltaTime)
+{
+	// Alway check if we are working with the right actor and the actor is valid
+	if (USlimeMoldEditorFuncLib::SingleActorWithSkeletonComponentIsSelected())
+	{
+		if (TargetActorComponent != USlimeMoldEditorFuncLib::GetSkeletonComponentFromSelectedActor())
+		{
+			// Reload the tool
+			GetToolManager()->DeactivateTool(EToolSide::Left, EToolShutdownType::Completed);
+			GetToolManager()->ActivateTool(EToolSide::Left);
+		}
+	}
+	else
+	{
+		GetToolManager()->DeactivateTool(EToolSide::Left, EToolShutdownType::Completed);
 	}
 }
 

@@ -11,6 +11,9 @@
 
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGenerateMeshEvent, UObject*, Properties);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGenerateDebugInfoEvent, UObject*, Properties);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAssignMaterials, UObject*, Properties);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FClearMesh, UObject*, Properties);
 
 UCLASS(BlueprintType, Blueprintable, meta = (BlueprintSpawnableComponent))
 class SLIMEMOLD_API USlimeMoldSkeletonComponent : public UActorComponent
@@ -25,7 +28,19 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, SaveGame)
 	TArray<FSkeletonLine> SkeletonLines;
 
-	// The tool calls this event in an owner actor of this component when GenerateMesh button is pressed
+	// GenerateMesh button triggers this event
 	UPROPERTY(BlueprintAssignable, EditDefaultsOnly)
 	FGenerateMeshEvent OnGenerateMesh;
+
+	// GenerateDebugInfo button triggers this event
+	UPROPERTY(BlueprintAssignable, EditDefaultsOnly)
+	FGenerateDebugInfoEvent OnGenerateDebugInfo;
+
+	// AssignMaterials button triggers this event
+	UPROPERTY(BlueprintAssignable, EditDefaultsOnly)
+	FAssignMaterials OnAssignMaterials;
+
+	// ClearMesh button triggers this event
+	UPROPERTY(BlueprintAssignable, EditDefaultsOnly)
+	FClearMesh OnClearMesh;
 };
