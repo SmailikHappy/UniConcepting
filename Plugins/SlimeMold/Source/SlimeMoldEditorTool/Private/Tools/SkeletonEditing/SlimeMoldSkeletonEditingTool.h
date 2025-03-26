@@ -50,11 +50,11 @@ public:
 
 	/** The amount of clusters (not a number) to generate from the line with this point */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Point data")
-	float PointClusterization = 1.0f;
+	float PointClusterization = 0.0f;
 
 	/** Value that corresponds to vein producing */
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Point data")
-	float PointVeinness = 1.0f;
+	float PointVeinness = 0.0f;
 
 
 
@@ -77,13 +77,13 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Editor settings")
 	bool bChangeSelectionOnPointCreate = true;
 
-	/** Point color with minimal veinness */
+	/** Point color with minimal clusterization */
 	UPROPERTY(EditAnywhere, Category = "Editor settings")
-	FLinearColor PointColorMinVeinness = FLinearColor::Black;
+	FLinearColor PointColorMinClusterization = FLinearColor::Black;
 
 	/** Point color with maximal veinness */
 	UPROPERTY(EditAnywhere, Category = "Editor settings")
-	FLinearColor PointColorMaxVeinness = FLinearColor::White;
+	FLinearColor PointColorMaxClasterization = FLinearColor::White;
 
 	/** Point color when selected */
 	UPROPERTY(EditAnywhere, Category = "Editor settings")
@@ -93,13 +93,17 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Editor settings")
 	FLinearColor GhostPointColor = FLinearColor(1.0f, 0.2f, 1.0f, 1.0f);
 
-	/** Line default color */
+	/** Line color with minimal veinness */
 	UPROPERTY(EditAnywhere, Category = "Editor settings")
-	FLinearColor LineColor = FLinearColor(0.0f, 1.0f, 1.0f, 1.0f);
+	FLinearColor LineColorMinVeinness = FLinearColor(0.25f, 0.25f, 0.0f, 1.0f);
+
+	/** Line color with maximal veinness */
+	UPROPERTY(EditAnywhere, Category = "Editor settings")
+	FLinearColor LineColorMaxVeinness = FLinearColor(0.0f, 1.0f, 1.0f, 1.0f);
 
 	/** Line color when selected */
 	UPROPERTY(EditAnywhere, Category = "Editor settings")
-	FLinearColor LineColorSelected = FLinearColor(1.0f, 0.5f, 0.5f, 1.0f);
+	FLinearColor LineColorSelected = FLinearColor::Red;
 
 	/** Ghost line color */
 	UPROPERTY(EditAnywhere, Category = "Editor settings")

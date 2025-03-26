@@ -68,7 +68,21 @@ void USlimeMoldSkeletonEditingTool::Setup()
 
 	CreateGizmo();
 
-	AssignProperties();
+
+
+	Properties = NewObject<USlimeMoldSkeletonEditingToolProperties>(this);
+	AddToolPropertySource(Properties);
+
+	Properties->RestoreProperties(this, "Skeleton properties");
+
+	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
+
+	PropertyModule.RegisterCustomClassLayout(
+		USlimeMoldSkeletonEditingToolProperties::StaticClass()->GetFName(),
+		FOnGetDetailCustomizationInstance::CreateStatic(&FSlimeMoldSkeletonEditingCustomization::MakeInstance)
+	);
+
+	UE_LOG(LogTemp, Display, TEXT("Skeleton editing tool has been initialized"));
 }
 
 void USlimeMoldSkeletonEditingTool::SetWorld(UWorld* World)
@@ -133,6 +147,7 @@ void USlimeMoldSkeletonEditingTool::OnPropertyModified(UObject* PropertySet, FPr
 
 void USlimeMoldSkeletonEditingTool::Shutdown(EToolShutdownType ShutdownType)
 {
+	Properties->SaveProperties(this, "Skeleton properties");
 	DestroyGizmo();
 }
 
@@ -271,19 +286,7 @@ void USlimeMoldSkeletonEditingTool::MouseReleased()
  */
 void USlimeMoldSkeletonEditingTool::AssignProperties()
 {
-	// Create the property set and register it with the Tool
-	Properties = NewObject<USlimeMoldSkeletonEditingToolProperties>(this);
-	AddToolPropertySource(Properties);
-
-	UE_LOG(LogTemp, Display, TEXT("Skeleton properties have been assigned"));
-
-	// Register the custom detail customization
-	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
-
-	PropertyModule.RegisterCustomClassLayout(
-		USlimeMoldSkeletonEditingToolProperties::StaticClass()->GetFName(),
-		FOnGetDetailCustomizationInstance::CreateStatic(&FSlimeMoldSkeletonEditingCustomization::MakeInstance)
-	);
+	
 }
 
 FInputRayHit USlimeMoldSkeletonEditingTool::FindRayHit(const FRay& WorldRay, FVector& HitPos)
@@ -684,7 +687,10 @@ void USlimeMoldSkeletonEditingTool::Render(IToolsContextRenderAPI* RenderAPI)
 			FVector Point1Pos = TargetActorComponent->SkeletonPoints[Line.Point1ID].WorldPos;
 			FVector Point2Pos = TargetActorComponent->SkeletonPoints[Line.Point2ID].WorldPos;
 
-			FLinearColor LineColor = SelectedLines.Contains(Line) ? Properties->LineColorSelected : Properties->LineColor;
+			float AvgVeinness = (TargetActorComponent->SkeletonPoints[Line.Point1ID].Veinness + TargetActorComponent->SkeletonPoints[Line.Point2ID].Veinness) / 2.0f;
+
+			FLinearColor LineColor = SelectedLines.Contains(Line) ? Properties->LineColorSelected :
+				FMath::Lerp(Properties->LineColorMinVeinness, Properties->LineColorMaxVeinness, (1.0f - 1.0f / (FMath::Max<float>(AvgVeinness, 0.001f) + 1.0f)));
 
 			PDI->DrawLine(Point1Pos, Point2Pos,	LineColor, SDPG_Foreground, 1.0f);
 		}
@@ -693,7 +699,7 @@ void USlimeMoldSkeletonEditingTool::Render(IToolsContextRenderAPI* RenderAPI)
 		{
 			FSkeletonPoint& Point = TargetActorComponent->SkeletonPoints[i];
 			FLinearColor PointColor = SelectedPointIDs.Contains(i) ? Properties->PointColorSelected :
-				FMath::Lerp( Properties->PointColorMinVeinness, Properties->PointColorMaxVeinness, (1.0f - 1.0f / (FMath::Max<float>(Point.Clusterization, 0.001f) + 1.0f)));
+				FMath::Lerp( Properties->PointColorMinClusterization, Properties->PointColorMaxClasterization, (1.0f - 1.0f / (FMath::Max<float>(Point.Clusterization, 0.001f) + 1.0f)));
 
 			PDI->DrawPoint(Point.WorldPos, PointColor, Point.Thickness + 10.0f, SDPG_Foreground);
 		}

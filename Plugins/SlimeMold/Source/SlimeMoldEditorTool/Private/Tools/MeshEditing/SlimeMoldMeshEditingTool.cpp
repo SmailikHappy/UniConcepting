@@ -65,7 +65,7 @@ void USlimeMoldMeshEditingTool::Setup()
 
 		MeshProperties->RestoreProperties(this, "MeshEditingMeshProperties");
 
-		UE_LOG(LogTemp, Display, TEXT("Mesh properties were created"));
+		UE_LOG(LogTemp, Display, TEXT("Mesh properties have been assigned"));
 	}
 
 	UE_LOG(LogTemp, Display, TEXT("Mesh editing tool has been initialized"));
