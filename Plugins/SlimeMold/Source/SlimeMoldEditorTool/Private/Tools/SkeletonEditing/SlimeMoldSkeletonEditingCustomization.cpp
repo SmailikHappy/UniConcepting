@@ -31,7 +31,7 @@ void FSlimeMoldSkeletonEditingCustomization::CustomizeDetails(IDetailLayoutBuild
 	DetailBuilder.HideProperty(SplitLineButton);
 	DetailBuilder.HideProperty(DeletePointsButton);
 
-
+#pragma region Button-delete
 	// Add delete points button
 	SkeletonButtonsCategory.AddCustomRow(LOCTEXT("DeletePointsButtonRow", "Delete points button"))
 		.ValueContent()
@@ -48,7 +48,9 @@ void FSlimeMoldSkeletonEditingCustomization::CustomizeDetails(IDetailLayoutBuild
 					return FReply::Handled();
 				}))
 		];
+#pragma endregion Button-delete
 
+#pragma region Button-disconnect
 	// Add disconnect points button
 	SkeletonButtonsCategory.AddCustomRow(LOCTEXT("DisconnectPointsButtonRow", "Disconnect points button"))
 		.ValueContent()
@@ -65,7 +67,9 @@ void FSlimeMoldSkeletonEditingCustomization::CustomizeDetails(IDetailLayoutBuild
 						return FReply::Handled();
 					}))
 		];
+#pragma endregion Button-disconnect
 
+#pragma region Button-split
 	// Add split line button
 	SkeletonButtonsCategory.AddCustomRow(LOCTEXT("SplitLineButtonRow", "Split line button"))
 		.ValueContent()
@@ -82,6 +86,7 @@ void FSlimeMoldSkeletonEditingCustomization::CustomizeDetails(IDetailLayoutBuild
 						return FReply::Handled();
 					}))
 		];
+#pragma endregion Button-split
 }
 
 #undef LOCTEXT_NAMESPACE
