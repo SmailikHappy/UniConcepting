@@ -33,9 +33,8 @@ public:
 	virtual UInteractiveTool* BuildTool(const FToolBuilderState& SceneState) const override;
 };
 
-/**
- * Property set for every child tool
- */
+
+
 UCLASS(Config = EditorPerProjectUserSettings)
 class SLIMEMOLDEDITORTOOL_API USlimeMoldSkeletonEditingToolProperties : public UInteractiveToolPropertySet
 {
@@ -57,7 +56,6 @@ public:
 	float PointVeinness = 0.0f;
 
 
-
 	UPROPERTY(EditAnywhere, Category = "Buttons")
 	bool bDeletePoints = false;
 
@@ -66,9 +64,8 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Buttons")
 	bool bSplitLine = false;
-
 	
-	
+#pragma region EditorSettings
 	/** Mouse 'radius' point detection threshlod */
 	UPROPERTY(EditAnywhere, Category = "Editor settings")
 	float SelectionRadiusThreshold = 1.0f;
@@ -108,6 +105,7 @@ public:
 	/** Ghost line color */
 	UPROPERTY(EditAnywhere, Category = "Editor settings")
 	FLinearColor GhostLineColor = FLinearColor(1.0f, 0.5f, 0.5f, 1.0f);
+#pragma endregion
 };
 
 
@@ -197,8 +195,6 @@ private:
 
 	FTransform PreviousGizmoTransform = FTransform::Identity;
 	FVector GizmoPositionDelta = FVector::ZeroVector;
-
-	int UniqueID = 0;
 
 protected:
 
