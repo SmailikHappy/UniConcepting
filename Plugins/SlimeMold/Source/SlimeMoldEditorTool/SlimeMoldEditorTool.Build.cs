@@ -30,7 +30,7 @@ public class SlimeMoldEditorTool : ModuleRules
 				"LevelEditor",
 				"InteractiveToolsFramework",
                 "EditorInteractiveToolsFramework",
-				"SlimeMold",
+                "SlimeMold",
 			}
 			);
 
