@@ -4,6 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "Components/DynamicMeshComponent.h"
+//#include "GeometryScriptTypes.h"
+//#include "UDinamicMesh.h"
+#include <Components/SplineComponent.h>
 #include "DynamicMesh/DynamicMesh3.h"
 #include "DynamicMesh/DynamicMeshAttributeSet.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
@@ -18,20 +21,10 @@ class UNICONCEPTING_API UMyBlueprintFunctionLibrary : public UBlueprintFunctionL
 	GENERATED_BODY()
 
 	UFUNCTION(BlueprintCallable, Category = "SlimeMoldEditorTool")
-	static bool EnableVertexColors(UDynamicMeshComponent* MeshComponent);
+	static UPARAM(DisplayName = "Target Mesh") UDynamicMesh*
+	InitializeVertexColorBuffer(UDynamicMesh* TargetMesh, const FVector3f& DefaultVertexColor);
 
 	UFUNCTION(BlueprintCallable, Category = "SlimeMoldEditorTool")
-	static bool UpdateVertexColors(UDynamicMeshComponent* MeshComponent, const FVector3f& NewVertexColor);
-
-
-	static void InitializeOverlayToPerVertexColors(UE::Geometry::FDynamicMeshColorOverlay* ColorOverlay);
-
-	//UFUNCTION(BlueprintCallable, Category = "SlimeMoldEditorTool")
-	//void UpdateVertexNormal(
-	//	UDynamicMesh* TargetMesh,
-	//	int VertexID,
-	//	FVector NewColor,
-	//	bool& bIsValidVertex,
-	//	bool bMergeSplitNormals,
-	//	bool bDeferChangeNotifications);
+	static UPARAM(DisplayName = "Target Mesh") UDynamicMesh*
+	UpdateVertexColors(UDynamicMesh* TargetMesh, const TArray<int32>& VertexIDs, const FVector3f& NewVertexColor);
 };
