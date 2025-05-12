@@ -64,7 +64,7 @@ UDynamicMesh* UMyBlueprintFunctionLibrary::InitializeVertexColorBuffer(UDynamicM
 UDynamicMesh* UMyBlueprintFunctionLibrary::UpdateVertexColors(UDynamicMesh* TargetMesh, const TArray<int32>& VertexIDs, const FVector3f& NewVertexColor)
 {
 	check(TargetMesh);
-	using namespace UE::Geometry;	
+	using namespace UE::Geometry;
 
 	TargetMesh->EditMesh([&NewVertexColor, &VertexIDs](FDynamicMesh3& EditMesh)
 	{
@@ -119,6 +119,30 @@ UDynamicMesh* UMyBlueprintFunctionLibrary::UpdateVertexColors(UDynamicMesh* Targ
 	EDynamicMeshChangeType::GeneralEdit,
 	EDynamicMeshAttributeChangeFlags::VertexColors,
 	true);
+
+	return TargetMesh;
+}
+
+UDynamicMesh* UMyBlueprintFunctionLibrary::FindVerticesInRadius(UDynamicMesh* TargetMesh, const FVector3f& Location, float Radius, TArray<int32>& OutVertexIDs)
+{
+	OutVertexIDs.Reset();
+
+	float RadiusSquared = Radius * Radius;
+
+	check(TargetMesh);
+
+	TargetMesh->ProcessMesh([&](const FDynamicMesh3& ReadMesh)
+		{
+			for (int32 vid : ReadMesh.VertexIndicesItr())
+			{
+				FVector VertexLocation = (FVector)ReadMesh.GetVertex(vid);
+
+				if (FVector::DistSquared(VertexLocation, (FVector)Location) < RadiusSquared)
+				{
+					OutVertexIDs.Add(vid);
+				}
+			}
+		});
 
 	return TargetMesh;
 }

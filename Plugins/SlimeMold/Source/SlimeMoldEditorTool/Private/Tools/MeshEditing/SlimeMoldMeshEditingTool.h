@@ -41,7 +41,16 @@ class SLIMEMOLDEDITORTOOL_API USlimeMoldMeshPropertyBase : public UInteractiveTo
 	GENERATED_BODY()
 
 public:
-	USlimeMoldMeshPropertyBase() {} 
+	USlimeMoldMeshPropertyBase() {}
+
+	// Function to be called from the child property class itself, so the event is called from the skeleton component
+	UFUNCTION(BlueprintCallable, Category = "Button")
+	void ButtonPressCall(const FString& Key);
+
+	// Ideally, we should not have any access to the tool object in the properties,
+	// but we need to call a function there, that calls a function in the component that is being edited
+	UPROPERTY()
+	USlimeMoldMeshEditingTool* ToolObject = nullptr;
 };
 
 
@@ -57,20 +66,9 @@ class SLIMEMOLDEDITORTOOL_API USlimeMoldMeshEditingToolProperties : public UInte
 public:
 	USlimeMoldMeshEditingToolProperties() {}
 
-	UPROPERTY(EditAnywhere, Category = "Button")
-	bool bGenerateMesh = false;
 
-
-	UPROPERTY(EditAnywhere, Category = "Button")
-	bool bGenerateDebugInfo = false;
-
-	UPROPERTY(EditAnywhere, Category = "Button")
-	bool bAssignMaterials = false;
-
-	UPROPERTY(EditAnywhere, Category = "Button")
-	bool bClearMesh = false;
-
-	// Class of properties that will be passed via function to generate mesh
+	// Class of custom properties that user defines for itself
+	// The instance of this class will be passed via "ButtonPress" to the component being edited
 	UPROPERTY(EditAnywhere, Category = "Default")
 	TSubclassOf<USlimeMoldMeshPropertyBase> MeshPropertyClass;
 };
@@ -102,6 +100,11 @@ public:
 	void OnClickRelease(const FInputDeviceRay& ReleasePos) override {}
 	void OnTerminateDragSequence() override {}
 	void OnClickDrag(const FInputDeviceRay& DragPos) override {}
+
+
+	// Function for custom button press events
+	UFUNCTION()
+	void ButtonPressEvent(const FString& ButtonKey);
 
 protected:
 

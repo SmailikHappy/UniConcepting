@@ -11,7 +11,7 @@ struct SLIMEMOLD_API FSkeletonPoint
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FVector WorldPos = FVector::ZeroVector;
+	FVector RelativePos = FVector::ZeroVector;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float Thickness = 1.0f;

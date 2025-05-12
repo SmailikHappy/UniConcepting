@@ -41,6 +41,17 @@ USlimeMoldSkeletonComponent* USlimeMoldEditorFuncLib::GetSkeletonComponentFromSe
 	return nullptr;
 }
 
+AActor* USlimeMoldEditorFuncLib::GetSingleSelectedActor()
+{
+	if (SingleActorWithSkeletonComponentIsSelected())
+	{
+		TArray<UObject*> SelectedObjects;
+		GEditor->GetSelectedActors()->GetSelectedObjects(SelectedObjects);
+		return Cast<AActor>(SelectedObjects[0]);
+	}
+	return nullptr;
+}
+
 void USlimeMoldEditorFuncLib::WarnUserDialog(const FString& Title, const FString& Message)
 {
 	FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(Message), FText::FromString(Title));

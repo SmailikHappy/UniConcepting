@@ -61,9 +61,13 @@ void USlimeMoldMeshEditingTool::Setup()
 	{
 		// Mesh property set
 		MeshProperties = NewObject<USlimeMoldMeshPropertyBase>(this, ToolProperties->MeshPropertyClass);
+		check(MeshProperties);
+
 		AddToolPropertySource(MeshProperties);
 
 		MeshProperties->RestoreProperties(this, "MeshEditingMeshProperties");
+
+		MeshProperties->ToolObject = this;
 
 		UE_LOG(LogTemp, Display, TEXT("Mesh properties have been assigned"));
 	}
@@ -100,6 +104,15 @@ void USlimeMoldMeshEditingTool::OnClickPress(const FInputDeviceRay& PressPos)
 	}
 }
 
+void USlimeMoldMeshEditingTool::ButtonPressEvent(const FString& ButtonKey)
+{
+	FEditorScriptExecutionGuard ScriptGuard;
+	{
+		UE_LOG(LogTemp, Display, TEXT("Custom button event with name: \"%s\" has been called."), *FString(ButtonKey));
+		TargetActorComponent->OnCustomButtonPress.Broadcast(MeshProperties, ButtonKey);
+	}
+}
+
 void USlimeMoldMeshEditingTool::OnPropertyModified(UObject* PropertySet, FProperty* Property)
 {
 	if (!PropertySet) return;
@@ -117,53 +130,6 @@ void USlimeMoldMeshEditingTool::OnPropertyModified(UObject* PropertySet, FProper
 			GetToolManager()->ActivateTool(EToolSide::Left);
 
 			return;
-		}
-
-		if (Property->GetName() == "bGenerateMesh" || Property->GetName() == "bGenerateDebugInfo" ||
-			Property->GetName() == "bAssignMaterials" || Property->GetName() == "bClearMesh")
-		{
-			if (!MeshProperties)
-			{
-				USlimeMoldEditorFuncLib::WarnUserDialog("Generation aborted", "Mesh properties are not set\nChoose property class");
-				return;
-			}
-		}
-
-		// Generate mesh button has been pressed
-		if (Property->GetName() == "bGenerateMesh")
-		{
-			FEditorScriptExecutionGuard ScriptGuard;
-			{
-				UE_LOG(LogTemp, Display, TEXT("Generating mesh"));
-				TargetActorComponent->OnGenerateMesh.Broadcast(MeshProperties);
-			}
-		}
-		// Generate debug info button has been pressed
-		else if (Property->GetName() == "bGenerateDebugInfo")
-		{
-			FEditorScriptExecutionGuard ScriptGuard;
-			{
-				UE_LOG(LogTemp, Display, TEXT("Generating debug info"));
-				TargetActorComponent->OnGenerateDebugInfo.Broadcast(MeshProperties);
-			}
-		}
-		// Assign materials button has been pressed
-		else if (Property->GetName() == "bAssignMaterials")
-		{
-			FEditorScriptExecutionGuard ScriptGuard;
-			{
-				UE_LOG(LogTemp, Display, TEXT("Assigning materials"));
-				TargetActorComponent->OnAssignMaterials.Broadcast(MeshProperties);
-			}
-		}
-		// Clear mesh button has been pressed
-		else if (Property->GetName() == "bClearMesh")
-		{
-			FEditorScriptExecutionGuard ScriptGuard;
-			{
-				UE_LOG(LogTemp, Display, TEXT("Clearing mesh"));
-				TargetActorComponent->OnClearMesh.Broadcast(MeshProperties);
-			}
 		}
 	}
 }
@@ -206,6 +172,13 @@ FInputRayHit USlimeMoldMeshEditingTool::FindRayHit(const FRay& WorldRay, FVector
 		return FInputRayHit(Result.Distance);
 	}
 	return FInputRayHit();
+}
+
+void USlimeMoldMeshPropertyBase::ButtonPressCall(const FString& Key)
+{
+	UE_LOG(LogTemp, Display, TEXT("Button %s pressed"), *Key);
+
+	ToolObject->ButtonPressEvent(Key);
 }
 
 #undef LOCTEXT_NAMESPACE

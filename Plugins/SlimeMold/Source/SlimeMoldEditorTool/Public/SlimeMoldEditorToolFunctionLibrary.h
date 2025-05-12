@@ -22,5 +22,6 @@ public:
 
 	static bool SingleActorWithSkeletonComponentIsSelected();
 	static USlimeMoldSkeletonComponent* GetSkeletonComponentFromSelectedActor();
+	static AActor* GetSingleSelectedActor();
 	static void WarnUserDialog(const FString& Title, const FString& Message);
 };

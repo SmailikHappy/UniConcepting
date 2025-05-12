@@ -27,4 +27,9 @@ class UNICONCEPTING_API UMyBlueprintFunctionLibrary : public UBlueprintFunctionL
 	UFUNCTION(BlueprintCallable, Category = "SlimeMoldEditorTool")
 	static UPARAM(DisplayName = "Target Mesh") UDynamicMesh*
 	UpdateVertexColors(UDynamicMesh* TargetMesh, const TArray<int32>& VertexIDs, const FVector3f& NewVertexColor);
+
+	// This function outputs an array of vertices in a radius from the specific location
+	UFUNCTION(BlueprintCallable, Category = "SlimeMoldEditorTool")
+	static UPARAM(DisplayName = "Target Mesh") UDynamicMesh*
+	FindVerticesInRadius(UDynamicMesh* TargetMesh, const FVector3f& Location, float Radius, TArray<int32>& OutVertexIDs);
 };

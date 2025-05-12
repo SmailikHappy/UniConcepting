@@ -194,7 +194,7 @@ private:
 	UCombinedTransformGizmo* TransformGizmo = nullptr;
 
 	FTransform PreviousGizmoTransform = FTransform::Identity;
-	FVector GizmoPositionDelta = FVector::ZeroVector;
+	FVector GizmoWorldPositionDelta = FVector::ZeroVector;
 
 protected:
 
@@ -211,6 +211,9 @@ protected:
 
 	UPROPERTY()
 	UWorld* TargetWorld = nullptr;
+
+	UPROPERTY()
+	AActor* TargetActor = nullptr;
 	
 	UPROPERTY()
 	USlimeMoldSkeletonComponent* TargetActorComponent = nullptr;
@@ -219,7 +222,7 @@ protected:
 	 
 	bool bDrawGhostPoint = false;
 	bool bDrawGhostLines = false;
-	FSkeletonPoint GhostPoint;		// A ghost point that is not yet placed but is being shown where it could be placed OR
+	FVector GhostPointWorldPos;		// A ghost point that is not yet placed but is being shown where it could be placed OR
 									// A ghost connection with selected and ghost point, shown where new lines might appear
 
 

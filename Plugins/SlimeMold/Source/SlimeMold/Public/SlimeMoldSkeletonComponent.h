@@ -10,10 +10,7 @@
 
 
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGenerateMeshEvent, UObject*, Properties);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FGenerateDebugInfoEvent, UObject*, Properties);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAssignMaterials, UObject*, Properties);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FClearMesh, UObject*, Properties);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FCustomButtonPressEvent, UObject*, Properties, const FString&, Key);
 
 UCLASS(BlueprintType, Blueprintable, meta = (BlueprintSpawnableComponent))
 class SLIMEMOLD_API USlimeMoldSkeletonComponent : public UActorComponent
@@ -30,17 +27,5 @@ public:
 
 	// GenerateMesh button triggers this event
 	UPROPERTY(BlueprintAssignable, EditDefaultsOnly)
-	FGenerateMeshEvent OnGenerateMesh;
-
-	// GenerateDebugInfo button triggers this event
-	UPROPERTY(BlueprintAssignable, EditDefaultsOnly)
-	FGenerateDebugInfoEvent OnGenerateDebugInfo;
-
-	// AssignMaterials button triggers this event
-	UPROPERTY(BlueprintAssignable, EditDefaultsOnly)
-	FAssignMaterials OnAssignMaterials;
-
-	// ClearMesh button triggers this event
-	UPROPERTY(BlueprintAssignable, EditDefaultsOnly)
-	FClearMesh OnClearMesh;
+	FCustomButtonPressEvent OnCustomButtonPress;
 };

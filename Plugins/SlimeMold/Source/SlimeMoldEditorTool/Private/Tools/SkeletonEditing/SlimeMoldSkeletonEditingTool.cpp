@@ -15,6 +15,7 @@
 
 #include "SceneManagement.h"
 #include <Kismet/GameplayStatics.h>
+#include <Kismet/KismetMathLibrary.h>
 
 
 // Custom static functions
@@ -50,6 +51,9 @@ UInteractiveTool* USlimeMoldSkeletonEditingToolBuilder::BuildTool(const FToolBui
 
 void USlimeMoldSkeletonEditingTool::Setup()
 {
+	TargetActor = USlimeMoldEditorFuncLib::GetSingleSelectedActor();
+	check(TargetActor); 
+
 	TargetActorComponent = USlimeMoldEditorFuncLib::GetSkeletonComponentFromSelectedActor();
 	check(TargetActorComponent);
 
@@ -264,13 +268,13 @@ void USlimeMoldSkeletonEditingTool::MouseUpdate(const FInputDeviceRay& DevicePos
 			FSkeletonPoint& ClosestPoint = GetClosestPointToMouse(DevicePos, PointsInRegion, ClosestPointID);
 			if (ClosestPointID != -1)
 			{
-				GhostPoint = ClosestPoint;
+				GhostPointWorldPos = UKismetMathLibrary::TransformLocation(TargetActor->GetActorTransform(), ClosestPoint.RelativePos);
 			}
 		}
 		else
 		{
 			bDrawGhostPoint = true;
-			FindRayHit(DevicePos.WorldRay, GhostPoint.WorldPos);
+			FindRayHit(DevicePos.WorldRay, GhostPointWorldPos);
 		}
 	}
 }
@@ -347,7 +351,9 @@ void USlimeMoldSkeletonEditingTool::SelectPoint(int32 PointID)
 	FSkeletonPoint& Point = TargetActorComponent->SkeletonPoints[PointID];
 	if (SelectedPointIDs.IsEmpty())
 	{
-		ShowGizmo(FTransform(Point.WorldPos));
+		FVector PointWorldPos = UKismetMathLibrary::TransformLocation(TargetActor->GetActorTransform(), Point.RelativePos);
+
+		ShowGizmo(FTransform(PointWorldPos));
 	}
 
 	Properties->PointThickness = Point.Thickness;
@@ -502,7 +508,9 @@ TSet<int32> USlimeMoldSkeletonEditingTool::GetPointIDsInMouseRegion(const FInput
 	{
 		FSkeletonPoint& Point = TargetActorComponent->SkeletonPoints[PointID];
 
-		FVector DirectionToPoint = Point.WorldPos - CameraLocation;
+		FVector PointWorldPos = UKismetMathLibrary::TransformLocation(TargetActor->GetActorTransform(), Point.RelativePos);
+
+		FVector DirectionToPoint = PointWorldPos - CameraLocation;
 		DirectionToPoint.Normalize();
 
 		float OneMinusDotProduct = 1.0f - FVector::DotProduct(DirectionToPoint, DevicePos.WorldRay.Direction);
@@ -525,7 +533,10 @@ FSkeletonPoint& USlimeMoldSkeletonEditingTool::GetClosestPointToMouse(const FInp
 	for (int32 PointID : SetOfPoints)
 	{
 		FSkeletonPoint& Point = TargetActorComponent->SkeletonPoints[PointID];
-		FVector DirectionToPoint = Point.WorldPos - DevicePos.WorldRay.Origin;
+
+		FVector PointWorldPos = UKismetMathLibrary::TransformLocation(TargetActor->GetActorTransform(), Point.RelativePos);
+
+		FVector DirectionToPoint = PointWorldPos - DevicePos.WorldRay.Origin;
 		DirectionToPoint.Normalize();
 		float DotProduct = FVector::DotProduct(DirectionToPoint, DevicePos.WorldRay.Direction);
 		if (DotProduct > MaxDotProduct)
@@ -545,7 +556,7 @@ void USlimeMoldSkeletonEditingTool::SplitLine(const FSkeletonLine& Line)
 	FSkeletonPoint& LinePoint1 = TargetActorComponent->SkeletonPoints[Line.Point1ID];
 	FSkeletonPoint& LinePoint2 = TargetActorComponent->SkeletonPoints[Line.Point2ID];
 
-	NewPoint.WorldPos = (LinePoint1.WorldPos + LinePoint2.WorldPos) / 2.0f;
+	NewPoint.RelativePos = (LinePoint1.RelativePos + LinePoint2.RelativePos) / 2.0f;
 	NewPoint.Thickness = (LinePoint1.Thickness + LinePoint2.Thickness) / 2.0f;
 	NewPoint.Clusterization = (LinePoint1.Clusterization + LinePoint2.Clusterization) / 2.0f;
 	NewPoint.Veinness = (LinePoint1.Veinness + LinePoint2.Veinness) / 2.0f;	
@@ -578,7 +589,9 @@ FSkeletonPoint& USlimeMoldSkeletonEditingTool::CreatePoint(const FInputDeviceRay
 	if (bHitWorld)
 	{
 		// Add a new point
-		NewPoint.WorldPos = Result.Location;
+		FVector PointWorldPos = Result.Location;
+
+		NewPoint.RelativePos = UKismetMathLibrary::InverseTransformLocation(TargetActor->GetActorTransform(), PointWorldPos);
 
 		NewPointID = TargetActorComponent->SkeletonPoints.Add(NewPoint);
 	}
@@ -637,12 +650,14 @@ void USlimeMoldSkeletonEditingTool::CreateGizmo()
 
 	GizmoProxy->OnTransformChanged.AddWeakLambda(this, [this](UTransformProxy*, FTransform NewTransform)
 		{
-			GizmoPositionDelta = NewTransform.GetLocation() - PreviousGizmoTransform.GetLocation();
+			GizmoWorldPositionDelta = NewTransform.GetLocation() - PreviousGizmoTransform.GetLocation();
+
+			FVector GizmoRelativePositionDelta = UKismetMathLibrary::InverseTransformDirection(TargetActor->GetActorTransform(), GizmoWorldPositionDelta);
 
 			for (int32 PointID : SelectedPointIDs)
 			{
 				FSkeletonPoint& Point = TargetActorComponent->SkeletonPoints[PointID];
-				Point.WorldPos += GizmoPositionDelta;
+				Point.RelativePos += GizmoRelativePositionDelta;
 			}
 
 			PreviousGizmoTransform = NewTransform;
@@ -665,7 +680,7 @@ void USlimeMoldSkeletonEditingTool::Render(IToolsContextRenderAPI* RenderAPI)
 		// Draw the ghost point
 		if (bDrawGhostPoint) 
 		{
-			PDI->DrawPoint(GhostPoint.WorldPos, Properties->GhostPointColor, 10.0f, SDPG_Foreground);
+			PDI->DrawPoint(GhostPointWorldPos, Properties->GhostPointColor, 10.0f, SDPG_Foreground);
 		}
 
 		// Draw the ghost lines
@@ -674,7 +689,8 @@ void USlimeMoldSkeletonEditingTool::Render(IToolsContextRenderAPI* RenderAPI)
 			for (int32 PointID : SelectedPointIDs)
 			{
 				FSkeletonPoint& Point = TargetActorComponent->SkeletonPoints[PointID];
-				PDI->DrawLine(Point.WorldPos, GhostPoint.WorldPos,
+				FVector PointWorldPos = UKismetMathLibrary::TransformLocation(TargetActor->GetActorTransform(), Point.RelativePos);
+				PDI->DrawLine(PointWorldPos, GhostPointWorldPos,
 					Properties->GhostLineColor, SDPG_Foreground, 1.0f);
 			}
 		}
@@ -684,8 +700,14 @@ void USlimeMoldSkeletonEditingTool::Render(IToolsContextRenderAPI* RenderAPI)
 		{
 			TArray<FSkeletonLine> SelectedLines = GetSelectedLines();
 
-			FVector Point1Pos = TargetActorComponent->SkeletonPoints[Line.Point1ID].WorldPos;
-			FVector Point2Pos = TargetActorComponent->SkeletonPoints[Line.Point2ID].WorldPos;
+			//FVector Point1Pos = TargetActorComponent->SkeletonPoints[Line.Point1ID].WorldPos;
+			//FVector Point2Pos = TargetActorComponent->SkeletonPoints[Line.Point2ID].WorldPos;
+			FVector Point1Pos = UKismetMathLibrary::TransformLocation(
+				TargetActor->GetActorTransform(), TargetActorComponent->SkeletonPoints[Line.Point1ID].RelativePos
+			);
+			FVector Point2Pos = UKismetMathLibrary::TransformLocation(
+				TargetActor->GetActorTransform(), TargetActorComponent->SkeletonPoints[Line.Point2ID].RelativePos
+			);
 
 			float AvgVeinness = (TargetActorComponent->SkeletonPoints[Line.Point1ID].Veinness + TargetActorComponent->SkeletonPoints[Line.Point2ID].Veinness) / 2.0f;
 
@@ -701,7 +723,9 @@ void USlimeMoldSkeletonEditingTool::Render(IToolsContextRenderAPI* RenderAPI)
 			FLinearColor PointColor = SelectedPointIDs.Contains(i) ? Properties->PointColorSelected :
 				FMath::Lerp( Properties->PointColorMinClusterization, Properties->PointColorMaxClasterization, (1.0f - 1.0f / (FMath::Max<float>(Point.Clusterization, 0.001f) + 1.0f)));
 
-			PDI->DrawPoint(Point.WorldPos, PointColor, Point.Thickness + 10.0f, SDPG_Foreground);
+			FVector PointWorldPos = UKismetMathLibrary::TransformLocation(TargetActor->GetActorTransform(), Point.RelativePos);
+
+			PDI->DrawPoint(PointWorldPos, PointColor, Point.Thickness + 10.0f, SDPG_Foreground);
 		}
 	}
 }
