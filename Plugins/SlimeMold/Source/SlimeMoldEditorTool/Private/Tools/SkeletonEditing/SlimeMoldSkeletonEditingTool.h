@@ -180,21 +180,19 @@ protected:
 	TArray<FSkeletonLine> GetSelectedLines();
 	TSet<int32> GetPointIDsInMouseRegion(const FInputDeviceRay& DevicePos);
 	FSkeletonPoint& GetClosestPointToMouse(const FInputDeviceRay& DevicePos, const TSet<int32>& SetOfPointIDs, int32& ClosestPointID);
-
 	FSkeletonPoint& CreatePoint(const FInputDeviceRay& ClickPos, int32& NewPointID);
+	void ToolPseudoReload();
 
 private:
 	
 	/** Gizmo functionality */
-	void ShowGizmo(const FTransform& IntialTransform);
-	void HideGizmo();
-	void CreateGizmo();
+	void CreateGizmo(const FVector& IntialWorldLocation);
 	void DestroyGizmo();
 
 	UPROPERTY()
 	UCombinedTransformGizmo* TransformGizmo = nullptr;
 
-	FTransform PreviousGizmoTransform = FTransform::Identity;
+	FVector PreviousGizmoWorldLocation = FVector::ZeroVector;
 	FVector GizmoWorldPositionDelta = FVector::ZeroVector;
 
 protected:
@@ -218,14 +216,12 @@ protected:
 	
 	UPROPERTY()
 	USlimeMoldSkeletonComponent* TargetActorComponent = nullptr;
-	
+
+	UPROPERTY()
 	TSet<int32> SelectedPointIDs;		// set ensures no duplicates
-	 
+	
 	bool bDrawGhostPoint = false;
 	bool bDrawGhostLines = false;
 	FVector GhostPointWorldPos;		// A ghost point that is not yet placed but is being shown where it could be placed OR
 									// A ghost connection with selected and ghost point, shown where new lines might appear
-
-
-	bool bConnectGhostAndSelectedPoints = true;
 };

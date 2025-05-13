@@ -17,6 +17,8 @@
 #include <Kismet/GameplayStatics.h>
 #include <Kismet/KismetMathLibrary.h>
 
+#include "CustomMacros.h"
+
 
 
 
@@ -67,8 +69,6 @@ void USlimeMoldSkeletonEditingTool::Setup()
 
 	HoverBehavior->Modifiers.RegisterModifier(1, FInputDeviceState::IsShiftKeyDown);
 	HoverBehavior->Modifiers.RegisterModifier(2, FInputDeviceState::IsCtrlKeyDown);
-
-	CreateGizmo();
 
 
 
@@ -121,29 +121,49 @@ void USlimeMoldSkeletonEditingTool::OnPropertyModified(UObject* PropertySet, FPr
 				SplitLine(LineToSplit);
 			}
 		}
+
 	}
 
 	// Point data update
 	if (Property->GetName() == "PointThickness")
 	{
-		for (int32 PointID : SelectedPointIDs)
-		{
-			TargetActorComponent->SkeletonPoints[PointID].Thickness = Properties->PointThickness;
-		}
+		MODIFY(
+			TargetActorComponent,
+			{
+				for (int32 PointID : SelectedPointIDs)
+				{
+					TargetActorComponent->SkeletonPoints[PointID].Thickness = Properties->PointThickness;
+				}
+			},
+			CHANGE_EVENTS_OneProperty(TargetActorComponent, USlimeMoldSkeletonComponent, SkeletonPoints)
+		);
 	}
 	else if (Property->GetName() == "PointClusterization")
 	{
-		for (int32 PointID : SelectedPointIDs)
-		{
-			TargetActorComponent->SkeletonPoints[PointID].Clusterization = Properties->PointClusterization;
-		}
+		MODIFY(
+			TargetActorComponent,
+			{
+				for (int32 PointID : SelectedPointIDs)
+				{
+					TargetActorComponent->SkeletonPoints[PointID].Clusterization = Properties->PointClusterization;
+				}
+			},
+			CHANGE_EVENTS_OneProperty(TargetActorComponent, USlimeMoldSkeletonComponent, SkeletonPoints)
+		);
+		
 	}
 	else if (Property->GetName() == "PointVeinness")
 	{
-		for (int32 PointID : SelectedPointIDs)
-		{
-			TargetActorComponent->SkeletonPoints[PointID].Veinness = Properties->PointVeinness;
-		}
+		MODIFY(
+			TargetActorComponent,
+			{
+				for (int32 PointID : SelectedPointIDs)
+				{
+					TargetActorComponent->SkeletonPoints[PointID].Veinness = Properties->PointVeinness;
+				}
+			},
+			CHANGE_EVENTS_OneProperty(TargetActorComponent, USlimeMoldSkeletonComponent, SkeletonPoints)
+		);
 	}
 }
 
@@ -214,6 +234,7 @@ void USlimeMoldSkeletonEditingTool::MousePressed()
 		else
 		{
 			int32 NewPointID;
+
 			CreatePoint(MouseRayWhenPressed, NewPointID);
 
 			for (int32 PointID : SelectedPointIDs)
@@ -310,14 +331,18 @@ void USlimeMoldSkeletonEditingTool::SelectPoint(int32 PointID)
 	{
 		FVector PointWorldPos = UKismetMathLibrary::TransformLocation(TargetActor->GetActorTransform(), Point.RelativePos);
 
-		ShowGizmo(FTransform(PointWorldPos));
+		CreateGizmo(PointWorldPos);
 	}
 
 	Properties->PointThickness = Point.Thickness;
 	Properties->PointClusterization = Point.Clusterization;
 	Properties->PointVeinness = Point.Veinness;
 
-	SelectedPointIDs.Add(PointID);
+	MODIFY(
+		this,
+		SelectedPointIDs.Add(PointID);,
+		CHANGE_EVENTS_OneProperty(this, USlimeMoldSkeletonEditingTool, SelectedPointIDs)
+	)
 }
 
 // Currently not used
@@ -325,69 +350,83 @@ void USlimeMoldSkeletonEditingTool::DeselectPoint(int32 PointID)
 {
 	if (SelectedPointIDs.Contains(PointID))
 	{
-		SelectedPointIDs.Remove(PointID);
+		MODIFY(
+			this,
+			SelectedPointIDs.Remove(PointID);,
+			CHANGE_EVENTS_OneProperty(this, USlimeMoldSkeletonEditingTool, SelectedPointIDs)
+		);
 	}
 
 	if (SelectedPointIDs.IsEmpty())
 	{
-		HideGizmo();
+		DestroyGizmo();
 	}
 }
 
 void USlimeMoldSkeletonEditingTool::DeselectAllPoints()
 {
-	SelectedPointIDs.Empty();
-	HideGizmo();
+	MODIFY(
+		this,
+		SelectedPointIDs.Empty();,
+		CHANGE_EVENTS_OneProperty(this, USlimeMoldSkeletonEditingTool, SelectedPointIDs)
+	);
+	DestroyGizmo();
 }
 
 void USlimeMoldSkeletonEditingTool::DeleteSelectedPoints()
 {
 	// Remove connected lines to these points first
-	for (int32 PointID : SelectedPointIDs)
-	{
-		for (int i = 0; i < TargetActorComponent->SkeletonLines.Num(); i++)
+	MODIFY(
+		TargetActorComponent,
 		{
-			FSkeletonLine& Line = TargetActorComponent->SkeletonLines[i];
-			if (Line.Point1ID == PointID || Line.Point2ID == PointID)
+			for (int32 PointID : SelectedPointIDs)
 			{
-				TargetActorComponent->SkeletonLines.RemoveAt(i--);
+				for (int i = 0; i < TargetActorComponent->SkeletonLines.Num(); i++)
+				{
+					FSkeletonLine& Line = TargetActorComponent->SkeletonLines[i];
+					if (Line.Point1ID == PointID || Line.Point2ID == PointID)
+					{
+						TargetActorComponent->SkeletonLines.RemoveAt(i--);
+					}
+				}
 			}
-		}
-	}
 
-	// Reconnect lines to right IDs
-	TArray<int32> SelectedPointIDsArray = SelectedPointIDs.Array();
-	SelectedPointIDsArray.Sort();
+			// Reconnect lines to right IDs
+			TArray<int32> SelectedPointIDsArray = SelectedPointIDs.Array();
+			SelectedPointIDsArray.Sort();
 
-	DeselectAllPoints();
+			DeselectAllPoints();
 
-	while (!SelectedPointIDsArray.IsEmpty())
-	{
-		int32 PointIDToRemove = SelectedPointIDsArray[0];
-
-		TargetActorComponent->SkeletonPoints.RemoveAt(PointIDToRemove);
-
-		// Lower the indices of the points in the lines
-		for (FSkeletonLine& Line : TargetActorComponent->SkeletonLines)
-		{
-			if (Line.Point1ID > PointIDToRemove)
+			while (!SelectedPointIDsArray.IsEmpty())
 			{
-				Line.Point1ID--;
-			}
-			if (Line.Point2ID > PointIDToRemove)
-			{
-				Line.Point2ID--;
-			}
-		}
+				int32 PointIDToRemove = SelectedPointIDsArray[0];
 
-		// Lower the indices of the selected points
-		for (int32& PointID : SelectedPointIDsArray)
-		{
-			PointID--;
-		}
+				TargetActorComponent->SkeletonPoints.RemoveAt(PointIDToRemove);
 
-		SelectedPointIDsArray.RemoveAt(0);
-	}
+				// Lower the indices of the points in the lines
+				for (FSkeletonLine& Line : TargetActorComponent->SkeletonLines)
+				{
+					if (Line.Point1ID > PointIDToRemove)
+					{
+						Line.Point1ID--;
+					}
+					if (Line.Point2ID > PointIDToRemove)
+					{
+						Line.Point2ID--;
+					}
+				}
+
+				// Lower the indices of the selected points
+				for (int32& PointID : SelectedPointIDsArray)
+				{
+					PointID--;
+				}
+
+				SelectedPointIDsArray.RemoveAt(0);
+			}
+		},
+		CHANGE_EVENTS_TwoProperties(TargetActorComponent, USlimeMoldSkeletonComponent, SkeletonLines, SkeletonPoints)
+	);
 }
 
 void USlimeMoldSkeletonEditingTool::ConnectPoints(int32 Point1ID, int32 Point2ID)
@@ -405,37 +444,44 @@ void USlimeMoldSkeletonEditingTool::ConnectPoints(int32 Point1ID, int32 Point2ID
 			return;
 		}
 	}
-	TargetActorComponent->SkeletonLines.Add(NewLine);
+	MODIFY(
+		TargetActorComponent,
+		TargetActorComponent->SkeletonLines.Add(NewLine);,
+		CHANGE_EVENTS_OneProperty(TargetActorComponent, USlimeMoldSkeletonComponent, SkeletonLines)
+	);
 }
 
 void USlimeMoldSkeletonEditingTool::DisconnectPoints(int32 Point1ID, int32 Point2ID)
 {
-	// Find the line to remove
-	FSkeletonLine LineToRemove(Point1ID, Point2ID);
-	for (int i = 0; i < TargetActorComponent->SkeletonLines.Num(); i++)
-	{
-		FSkeletonLine& Line = TargetActorComponent->SkeletonLines[i];
-		if (LineToRemove == Line)
-		{
-			TargetActorComponent->SkeletonLines.RemoveAt(i);
-			return;
-		}
-	}
+
 }
 
 void USlimeMoldSkeletonEditingTool::DisconnectSelectedPoints()
 {
-	// UNOPTIMIZED
-	for (int32 Point1ID : SelectedPointIDs)
-	{
-		for (int32 Point2ID : SelectedPointIDs)
+	MODIFY(
+		TargetActorComponent,
 		{
-			if (Point1ID != Point2ID)
+			for (int32 Point1ID : SelectedPointIDs)
 			{
-				DisconnectPoints(Point1ID, Point2ID);
+				for (int32 Point2ID : SelectedPointIDs)
+				{
+					if (Point1ID == Point2ID) continue;
+
+					FSkeletonLine LineToRemove(Point1ID, Point2ID);
+					for (int i = 0; i < TargetActorComponent->SkeletonLines.Num(); i++)
+					{
+						FSkeletonLine& Line = TargetActorComponent->SkeletonLines[i];
+						if (LineToRemove == Line)
+						{
+							TargetActorComponent->SkeletonLines.RemoveAt(i);
+							return;
+						}
+					}
+				}
 			}
-		}
-	}
+		},
+		CHANGE_EVENTS_OneProperty(TargetActorComponent, USlimeMoldSkeletonComponent, SkeletonLines)
+	);
 }
 
 TArray<FSkeletonLine> USlimeMoldSkeletonEditingTool::GetSelectedLines()
@@ -518,23 +564,29 @@ void USlimeMoldSkeletonEditingTool::SplitLine(const FSkeletonLine& Line)
 	NewPoint.RelativePos = (LinePoint1.RelativePos + LinePoint2.RelativePos) / 2.0f;
 	NewPoint.Thickness = (LinePoint1.Thickness + LinePoint2.Thickness) / 2.0f;
 	NewPoint.Clusterization = (LinePoint1.Clusterization + LinePoint2.Clusterization) / 2.0f;
-	NewPoint.Veinness = (LinePoint1.Veinness + LinePoint2.Veinness) / 2.0f;	
+	NewPoint.Veinness = (LinePoint1.Veinness + LinePoint2.Veinness) / 2.0f;
 
-	int32 NewPointID = TargetActorComponent->SkeletonPoints.Add(NewPoint);
+	MODIFY(
+		TargetActorComponent,
+		{ 
+			int32 NewPointID = TargetActorComponent->SkeletonPoints.Add(NewPoint);
 
-	// Create two new lines
-	FSkeletonLine NewLine1;
-	NewLine1.Point1ID = Line.Point1ID;
-	NewLine1.Point2ID = NewPointID;
-	TargetActorComponent->SkeletonLines.Add(NewLine1);
+			// Create two new lines
+			FSkeletonLine NewLine1;
+			NewLine1.Point1ID = Line.Point1ID;
+			NewLine1.Point2ID = NewPointID;
+			TargetActorComponent->SkeletonLines.Add(NewLine1);
 
-	FSkeletonLine NewLine2;
-	NewLine2.Point1ID = NewPointID;
-	NewLine2.Point2ID = Line.Point2ID;
-	TargetActorComponent->SkeletonLines.Add(NewLine2);
+			FSkeletonLine NewLine2;
+			NewLine2.Point1ID = NewPointID;
+			NewLine2.Point2ID = Line.Point2ID;
+			TargetActorComponent->SkeletonLines.Add(NewLine2);
 
-	// Remove the old line
-	TargetActorComponent->SkeletonLines.Remove(Line);
+			// Remove the old line
+			TargetActorComponent->SkeletonLines.Remove(Line);
+		},
+		CHANGE_EVENTS_TwoProperties(TargetActorComponent, USlimeMoldSkeletonComponent, SkeletonPoints, SkeletonLines)
+	);	
 }
 
 FSkeletonPoint& USlimeMoldSkeletonEditingTool::CreatePoint(const FInputDeviceRay& ClickPos, int32& NewPointID)
@@ -552,10 +604,31 @@ FSkeletonPoint& USlimeMoldSkeletonEditingTool::CreatePoint(const FInputDeviceRay
 
 		NewPoint.RelativePos = UKismetMathLibrary::InverseTransformLocation(TargetActor->GetActorTransform(), PointWorldPos);
 
-		NewPointID = TargetActorComponent->SkeletonPoints.Add(NewPoint);
+		MODIFY(
+			TargetActorComponent,
+			NewPointID = TargetActorComponent->SkeletonPoints.Add(NewPoint);,
+			CHANGE_EVENTS_OneProperty(TargetActorComponent, USlimeMoldSkeletonComponent, SkeletonPoints)
+		);
 	}
 
 	return TargetActorComponent->SkeletonPoints[NewPointID];
+}
+
+void USlimeMoldSkeletonEditingTool::ToolPseudoReload()
+{
+	if (USlimeMoldEditorFuncLib::SingleActorWithSkeletonComponentIsSelected())
+	{
+		DeselectAllPoints();
+		TargetActorComponent = USlimeMoldEditorFuncLib::GetSkeletonComponentFromSelectedActor();
+		TargetActor = USlimeMoldEditorFuncLib::GetSingleSelectedActor();
+	}
+
+	// For safety checks
+	if (!TargetActor || !TargetActorComponent)
+	{
+		GetToolManager()->DeactivateTool(EToolSide::Left, EToolShutdownType::Completed);
+		UE_LOG(LogTemp, Warning, TEXT("Tool pseudo reload failed!"));
+	}
 }
 
 /*
@@ -577,41 +650,37 @@ void USlimeMoldSkeletonEditingTool::DestroyGizmo()
 {
 	UInteractiveGizmoManager* const GizmoManager = GetToolManager()->GetPairedGizmoManager();
 	ensure(GizmoManager);
-	GizmoManager->DestroyGizmo(TransformGizmo);
 
+	if (!TransformGizmo) return;
+
+	GizmoManager->DestroyGizmo(TransformGizmo);
 	TransformGizmo = nullptr;
 }
 
-void USlimeMoldSkeletonEditingTool::ShowGizmo(const FTransform& IntialTransform)
-{
-	PreviousGizmoTransform = IntialTransform;
-	TransformGizmo->SetNewGizmoTransform(IntialTransform);
-	TransformGizmo->SetVisibility(true);
-}
 
-void USlimeMoldSkeletonEditingTool::HideGizmo()
-{
-	TransformGizmo->SetVisibility(false);
-}
-
-void USlimeMoldSkeletonEditingTool::CreateGizmo()
+void USlimeMoldSkeletonEditingTool::CreateGizmo(const FVector& IntialWorldLocation)
 {
 	UInteractiveGizmoManager* const GizmoManager = GetToolManager()->GetPairedGizmoManager();
 	ensure(GizmoManager);
 
 	UTransformProxy* GizmoProxy = NewObject<UTransformProxy>(this);
 	ensure(GizmoProxy);
+	GizmoProxy->SetTransform(FTransform(IntialWorldLocation));
+
+	PreviousGizmoWorldLocation = IntialWorldLocation;
 
 	TransformGizmo = GizmoManager->Create3AxisTransformGizmo(this);
 	ensure(TransformGizmo);
 
 	TransformGizmo->SetActiveTarget(GizmoProxy, GetToolManager());
+	TransformGizmo->CurrentCoordinateSystem = EToolContextCoordinateSystem::Local;
 
 	GizmoProxy->OnTransformChanged.AddWeakLambda(this, [this](UTransformProxy*, FTransform NewTransform)
 		{
-			GizmoWorldPositionDelta = NewTransform.GetLocation() - PreviousGizmoTransform.GetLocation();
-
-			FVector GizmoRelativePositionDelta = UKismetMathLibrary::InverseTransformDirection(TargetActor->GetActorTransform(), GizmoWorldPositionDelta);
+			FVector GizmoNewRelativePosition = UKismetMathLibrary::InverseTransformLocation(TargetActor->GetActorTransform(), NewTransform.GetLocation());
+			FVector GizmoPreviousRelativePosition = UKismetMathLibrary::InverseTransformLocation(TargetActor->GetActorTransform(), PreviousGizmoWorldLocation);
+			
+			FVector GizmoRelativePositionDelta = GizmoNewRelativePosition - GizmoPreviousRelativePosition;
 
 			for (int32 PointID : SelectedPointIDs)
 			{
@@ -619,12 +688,9 @@ void USlimeMoldSkeletonEditingTool::CreateGizmo()
 				Point.RelativePos += GizmoRelativePositionDelta;
 			}
 
-			PreviousGizmoTransform = NewTransform;
+			PreviousGizmoWorldLocation = NewTransform.GetLocation();
 		}
 	);
-
-	TransformGizmo->CurrentCoordinateSystem = EToolContextCoordinateSystem::World;
-	TransformGizmo->SetVisibility(false);
 }
 
 /*
@@ -643,7 +709,7 @@ void USlimeMoldSkeletonEditingTool::Render(IToolsContextRenderAPI* RenderAPI)
 		}
 
 		// Draw the ghost lines
-		if (bDrawGhostLines || (bConnectGhostAndSelectedPoints && bDrawGhostPoint))
+		if (bDrawGhostLines || bDrawGhostPoint)
 		{
 			for (int32 PointID : SelectedPointIDs)
 			{
@@ -694,9 +760,7 @@ void USlimeMoldSkeletonEditingTool::OnTick(float DeltaTime)
 	{
 		if (TargetActorComponent != USlimeMoldEditorFuncLib::GetSkeletonComponentFromSelectedActor())
 		{
-			// Reload the tool
-			GetToolManager()->DeactivateTool(EToolSide::Left, EToolShutdownType::Completed);
-			GetToolManager()->ActivateTool(EToolSide::Left);
+			ToolPseudoReload();
 		}
 	}
 	else

@@ -93,13 +93,19 @@ void USlimeMoldMeshEditingTool::OnClickPress(const FInputDeviceRay& PressPos)
 	}
 }
 
-void USlimeMoldMeshEditingTool::ButtonPressEvent(const FString& ButtonKey)
+void USlimeMoldMeshEditingTool::CustomButtonPress(const FString& ButtonKey, const bool MakeActorDirty)
 {
+	if (MakeActorDirty)
+		TargetActorComponent->Modify();
+
 	FEditorScriptExecutionGuard ScriptGuard;
 	{
 		UE_LOG(LogTemp, Display, TEXT("Custom button event with name: \"%s\" has been called."), *FString(ButtonKey));
 		TargetActorComponent->OnCustomButtonPress.Broadcast(MeshProperties, ButtonKey);
 	}
+
+	if (MakeActorDirty)
+		TargetActorComponent->MarkPackageDirty();
 }
 
 void USlimeMoldMeshEditingTool::OnPropertyModified(UObject* PropertySet, FProperty* Property)
@@ -149,11 +155,11 @@ void USlimeMoldMeshEditingTool::OnTick(float DeltaTime)
 	}
 }
 
-void USlimeMoldMeshPropertyBase::ButtonPressCall(const FString& Key)
+void USlimeMoldMeshPropertyBase::ButtonPressCall(const FString& Key, const bool MakeActorDirty)
 {
 	UE_LOG(LogTemp, Display, TEXT("Button %s pressed"), *Key);
 
-	ToolObject->ButtonPressEvent(Key);
+	ToolObject->CustomButtonPress(Key, MakeActorDirty);
 }
 
 #undef LOCTEXT_NAMESPACE

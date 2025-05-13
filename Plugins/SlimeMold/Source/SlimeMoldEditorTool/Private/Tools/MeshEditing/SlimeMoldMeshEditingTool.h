@@ -49,7 +49,7 @@ public:
 
 	// Function to be called from the child property class itself, so the event is called from the skeleton component
 	UFUNCTION(BlueprintCallable, Category = "Button")
-	void ButtonPressCall(const FString& Key);
+	void ButtonPressCall(const FString& Key, const bool MakeActorDirty);
 
 	// Ideally, we should not have any access to the tool object in the properties,
 	// but we need to call a function there, that calls a function in the component that is being edited
@@ -109,7 +109,7 @@ public:
 
 	// Function for custom button press events
 	UFUNCTION()
-	void ButtonPressEvent(const FString& ButtonKey);
+	void CustomButtonPress(const FString& ButtonKey, const bool MakeActorDirty);
 
 protected:
 
