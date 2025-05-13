@@ -56,3 +56,35 @@ void USlimeMoldEditorFuncLib::WarnUserDialog(const FString& Title, const FString
 {
 	FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(Message), FText::FromString(Title));
 }
+
+FInputRayHit USlimeMoldEditorFuncLib::FindRayHit(const UWorld* TargetWorld, const FRay& WorldRay)
+{
+	// Trace a ray into the World
+	FCollisionObjectQueryParams QueryParams(FCollisionObjectQueryParams::AllObjects);
+	FHitResult Result;
+
+	bool bRayWasHit = TargetWorld->LineTraceSingleByObjectType(Result, WorldRay.Origin, WorldRay.PointAt(999999), QueryParams);
+
+	if (bRayWasHit)
+	{
+		return FInputRayHit(Result.Distance);
+	}
+
+	return FInputRayHit();
+}
+
+bool USlimeMoldEditorFuncLib::FindRayHitPos(const UWorld* TargetWorld, const FRay& WorldRay, FVector& HitPos)
+{
+	// Trace a ray into the World
+	FCollisionObjectQueryParams QueryParams(FCollisionObjectQueryParams::AllObjects);
+	FHitResult Result;
+
+	bool bHitDetected = TargetWorld->LineTraceSingleByObjectType(Result, WorldRay.Origin, WorldRay.PointAt(999999), QueryParams);
+
+	if (bHitDetected)
+	{
+		HitPos = Result.ImpactPoint;
+	}
+
+	return bHitDetected;
+}

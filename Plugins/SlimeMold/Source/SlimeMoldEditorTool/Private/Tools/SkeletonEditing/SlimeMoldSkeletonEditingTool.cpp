@@ -18,8 +18,6 @@
 #include <Kismet/KismetMathLibrary.h>
 
 
-// Custom static functions
-#include "SlimeMoldEditorToolFunctionLibrary.h"
 
 
 
@@ -274,7 +272,7 @@ void USlimeMoldSkeletonEditingTool::MouseUpdate(const FInputDeviceRay& DevicePos
 		else
 		{
 			bDrawGhostPoint = true;
-			FindRayHit(DevicePos.WorldRay, GhostPointWorldPos);
+			USlimeMoldEditorFuncLib::FindRayHitPos(TargetWorld, DevicePos.WorldRay, GhostPointWorldPos);
 		}
 	}
 }
@@ -288,47 +286,6 @@ void USlimeMoldSkeletonEditingTool::MouseReleased()
 /*
  * Helper functions
  */
-void USlimeMoldSkeletonEditingTool::AssignProperties()
-{
-	
-}
-
-FInputRayHit USlimeMoldSkeletonEditingTool::FindRayHit(const FRay& WorldRay, FVector& HitPos)
-{
-	// trace a ray into the World
-	FCollisionObjectQueryParams QueryParams(FCollisionObjectQueryParams::AllObjects);
-	FHitResult Result;
-	bool bHitWorld = TargetWorld->LineTraceSingleByObjectType(Result, WorldRay.Origin, WorldRay.PointAt(999999), QueryParams);
-	if (bHitWorld)
-	{
-		HitPos = Result.ImpactPoint;
-		return FInputRayHit(Result.Distance);
-	}
-	return FInputRayHit();
-}
-
-FInputRayHit USlimeMoldSkeletonEditingTool::MouseHittingWorld(const FInputDeviceRay& ClickPos)
-{
-	FVector RayStart = ClickPos.WorldRay.Origin;
-	FVector RayEnd = ClickPos.WorldRay.PointAt(99999999.f);
-	FCollisionObjectQueryParams QueryParams(FCollisionObjectQueryParams::AllObjects);
-	FHitResult Result;
-	FInputRayHit Hit;
-
-
-	if (TargetWorld->LineTraceSingleByObjectType(Result, RayStart, RayEnd, QueryParams))
-	{
-
-		Hit.bHit = true;
-		Hit.HitDepth = Result.Distance;
-	}
-	else
-	{
-		Hit.bHit = false;
-	}
-
-	return Hit;
-}
 
 void USlimeMoldSkeletonEditingTool::OnUpdateModifierState(int ModifierID, bool bIsOn)
 {
@@ -363,6 +320,7 @@ void USlimeMoldSkeletonEditingTool::SelectPoint(int32 PointID)
 	SelectedPointIDs.Add(PointID);
 }
 
+// Currently not used
 void USlimeMoldSkeletonEditingTool::DeselectPoint(int32 PointID)
 {
 	if (SelectedPointIDs.Contains(PointID))
@@ -438,6 +396,7 @@ void USlimeMoldSkeletonEditingTool::ConnectPoints(int32 Point1ID, int32 Point2ID
 	FSkeletonLine NewLine;
 	NewLine.Point1ID = Point1ID;
 	NewLine.Point2ID = Point2ID;
+
 	// Check if the points are already connected
 	for (const FSkeletonLine& Line : TargetActorComponent->SkeletonLines)
 	{
@@ -607,7 +566,7 @@ void USlimeMoldSkeletonEditingTool::DrawDebugMouseInfo(const FInputDeviceRay& De
 	if (!bDrawDebugMouseInfo) return;
 
 	FVector WorldPosToDraw;
-	FindRayHit(DevicePos.WorldRay, WorldPosToDraw);
+	USlimeMoldEditorFuncLib::FindRayHitPos(TargetWorld, DevicePos.WorldRay, WorldPosToDraw);
 	DrawDebugPoint(TargetWorld, WorldPosToDraw, 10.0f, Color, false, 0.1f);
 }
 
@@ -700,8 +659,6 @@ void USlimeMoldSkeletonEditingTool::Render(IToolsContextRenderAPI* RenderAPI)
 		{
 			TArray<FSkeletonLine> SelectedLines = GetSelectedLines();
 
-			//FVector Point1Pos = TargetActorComponent->SkeletonPoints[Line.Point1ID].WorldPos;
-			//FVector Point2Pos = TargetActorComponent->SkeletonPoints[Line.Point2ID].WorldPos;
 			FVector Point1Pos = UKismetMathLibrary::TransformLocation(
 				TargetActor->GetActorTransform(), TargetActorComponent->SkeletonPoints[Line.Point1ID].RelativePos
 			);

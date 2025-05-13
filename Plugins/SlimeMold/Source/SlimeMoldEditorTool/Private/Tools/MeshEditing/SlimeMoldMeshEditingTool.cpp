@@ -8,9 +8,6 @@
 #include "CollisionQueryParams.h"
 #include "Engine/World.h"
 
-// Custom static functions
-#include "SlimeMoldEditorToolFunctionLibrary.h"
-
 
 // localization namespace
 #define LOCTEXT_NAMESPACE "USlimeMoldMeshEditingTool"
@@ -79,14 +76,6 @@ void USlimeMoldMeshEditingTool::SetWorld(UWorld* World)
 {
 	check(World);
 	this->TargetWorld = World;
-}
-
-FInputRayHit USlimeMoldMeshEditingTool::CanBeginClickDragSequence(const FInputDeviceRay& PressPos)
-{
-	// we only start drag if press-down is on top of something we can raycast
-	FVector Temp;
-	FInputRayHit Result = FindRayHit(PressPos.WorldRay, Temp);
-	return Result;
 }
 
 void USlimeMoldMeshEditingTool::OnClickPress(const FInputDeviceRay& PressPos)
@@ -158,20 +147,6 @@ void USlimeMoldMeshEditingTool::OnTick(float DeltaTime)
 	{
 		GetToolManager()->DeactivateTool(EToolSide::Left, EToolShutdownType::Completed);
 	}
-}
-
-FInputRayHit USlimeMoldMeshEditingTool::FindRayHit(const FRay& WorldRay, FVector& HitPos)
-{
-	// trace a ray into the World
-	FCollisionObjectQueryParams QueryParams(FCollisionObjectQueryParams::AllObjects);
-	FHitResult Result;
-	bool bHitWorld = TargetWorld->LineTraceSingleByObjectType(Result, WorldRay.Origin, WorldRay.PointAt(999999), QueryParams);
-	if (bHitWorld)
-	{
-		HitPos = Result.ImpactPoint;
-		return FInputRayHit(Result.Distance);
-	}
-	return FInputRayHit();
 }
 
 void USlimeMoldMeshPropertyBase::ButtonPressCall(const FString& Key)

@@ -16,6 +16,9 @@
 #include "InteractiveToolObjects.h"
 #include "InteractiveToolBuilder.h"
 
+// Custom static functions
+#include "SlimeMoldEditorToolFunctionLibrary.h"
+
 
 
 #include "SlimeMoldSkeletonEditingTool.generated.h"
@@ -133,13 +136,15 @@ public:
 	void OnUpdateModifierState(int ModifierID, bool bIsOn) override; 
 
 	/** IHoverBehaviorTarget implementation */
-	FInputRayHit BeginHoverSequenceHitTest(const FInputDeviceRay& PressPos) override { return MouseHittingWorld(PressPos); };
+	FInputRayHit BeginHoverSequenceHitTest(const FInputDeviceRay& PressPos) override
+		{ return USlimeMoldEditorFuncLib::FindRayHit(TargetWorld, PressPos.WorldRay); };
 	void OnBeginHover(const FInputDeviceRay& ClickPos) override {};
 	void OnEndHover() override {};
 	bool OnUpdateHover(const FInputDeviceRay& DevicePos) override { MouseUpdate(DevicePos); return true; };
 
 	/** IClickDragBehaviorTarget implementation */
-	FInputRayHit CanBeginClickDragSequence(const FInputDeviceRay& PressPos) override { return MouseHittingWorld(PressPos); };
+	FInputRayHit CanBeginClickDragSequence(const FInputDeviceRay& PressPos) override
+		{ return USlimeMoldEditorFuncLib::FindRayHit(TargetWorld, PressPos.WorldRay); };
 	void OnClickPress(const FInputDeviceRay& PressPos) override { MouseRayWhenPressed = PressPos; MouseIsPressed = true; MousePressed(); };
 	void OnClickDrag(const FInputDeviceRay& DragPos) override { MouseUpdate(DragPos); };
 	void OnClickRelease(const FInputDeviceRay& ReleasePos) override { MouseRayWhenReleased = ReleasePos; MouseIsPressed = false; MouseReleased(); };
@@ -159,7 +164,6 @@ protected:
 	void DrawDebugMouseInfo(const FInputDeviceRay& DevicePos, FColor Color);
 	
 	/** Skeleton managing functions */
-	void AssignProperties();
 	void SelectPoint(int32 PointID);
 	void DeselectPoint(int32 PointID);
 	void DeselectAllPoints();
@@ -176,13 +180,10 @@ protected:
 	TArray<FSkeletonLine> GetSelectedLines();
 	TSet<int32> GetPointIDsInMouseRegion(const FInputDeviceRay& DevicePos);
 	FSkeletonPoint& GetClosestPointToMouse(const FInputDeviceRay& DevicePos, const TSet<int32>& SetOfPointIDs, int32& ClosestPointID);
-	FInputRayHit FindRayHit(const FRay& WorldRay, FVector& HitPos);
 
 	FSkeletonPoint& CreatePoint(const FInputDeviceRay& ClickPos, int32& NewPointID);
 
 private:
-	/** Utility functions */
-	FInputRayHit MouseHittingWorld(const FInputDeviceRay& ClickPos);
 	
 	/** Gizmo functionality */
 	void ShowGizmo(const FTransform& IntialTransform);

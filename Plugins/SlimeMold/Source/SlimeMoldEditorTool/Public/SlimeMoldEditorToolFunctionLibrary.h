@@ -6,6 +6,7 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "Structs.h"
 #include "SlimeMoldSkeletonComponent.h"
+#include "InputState.h"
 #include "SlimeMoldEditorToolFunctionLibrary.generated.h"
 
 
@@ -24,4 +25,7 @@ public:
 	static USlimeMoldSkeletonComponent* GetSkeletonComponentFromSelectedActor();
 	static AActor* GetSingleSelectedActor();
 	static void WarnUserDialog(const FString& Title, const FString& Message);
+
+	static FInputRayHit FindRayHit(const UWorld* TargetWorld, const FRay& WorldRay);
+	static bool FindRayHitPos(const UWorld* TargetWorld, const FRay& WorldRay, FVector& HitPos);
 };

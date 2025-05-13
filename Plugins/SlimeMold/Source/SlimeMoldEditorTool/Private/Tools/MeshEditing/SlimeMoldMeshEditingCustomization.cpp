@@ -18,19 +18,7 @@ TSharedRef<IDetailCustomization> FSlimeMoldMeshEditingCustomization::MakeInstanc
 
 void FSlimeMoldMeshEditingCustomization::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 {
-	/*FName ButtonVariablesCategoryName = FName("Button");
-	IDetailCategoryBuilder& ButtonCategory = DetailBuilder.EditCategory(ButtonVariablesCategoryName);
-	DetailBuilder.HideCategory(ButtonVariablesCategoryName);*/
 
-	// Create a new category named options
-	//IDetailCategoryBuilder& MeshButtonsCategory = DetailBuilder.EditCategory("Buttons");
-
-	//TSharedRef<IPropertyHandle> PressButtonProperty = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(USlimeMoldMeshEditingToolProperties, bButtonPressed));
-	//TSharedRef<IPropertyHandle> ButtonKeyProperty = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(USlimeMoldMeshEditingToolProperties, ButtonKey));
-
-	// Hide the properties themselves and use them for the workaround
-	//DetailBuilder.HideProperty(PressButtonProperty);
-	//DetailBuilder.HideProperty(ButtonKeyProperty);
 }
 
 #undef LOCTEXT_NAMESPACE

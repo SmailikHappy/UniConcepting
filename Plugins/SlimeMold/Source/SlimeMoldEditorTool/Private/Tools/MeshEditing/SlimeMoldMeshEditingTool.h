@@ -13,6 +13,10 @@
 // Adding gizmo to the world
 #include "BaseGizmos/TransformGizmoUtil.h"
 
+// Custom static functions
+#include "SlimeMoldEditorToolFunctionLibrary.h"
+
+
 #include "SlimeMoldMeshEditingTool.generated.h"
 
 /**
@@ -95,7 +99,8 @@ public:
 
 
 	/** IClickDragBehaviorTarget implementation */
-	FInputRayHit CanBeginClickDragSequence(const FInputDeviceRay& PressPos) override;
+	FInputRayHit CanBeginClickDragSequence(const FInputDeviceRay& PressPos) override
+		{ return USlimeMoldEditorFuncLib::FindRayHit(TargetWorld, PressPos.WorldRay); };
 	void OnClickPress(const FInputDeviceRay& PressPos) override;
 	void OnClickRelease(const FInputDeviceRay& ReleasePos) override {}
 	void OnTerminateDragSequence() override {}
@@ -123,6 +128,4 @@ protected:
 
 	UPROPERTY()
 	USlimeMoldSkeletonComponent* TargetActorComponent = nullptr;
-
-	FInputRayHit FindRayHit(const FRay& WorldRay, FVector& HitPos);		// raycasts into World
 };
