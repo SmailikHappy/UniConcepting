@@ -20,6 +20,9 @@ void FSlimeMoldEditorToolModeCommands::RegisterCommands()
 {
 	TArray<TSharedPtr<FUICommandInfo>>& ToolCommands = Commands.FindOrAdd(NAME_Default);
 
+	UI_COMMAND(WeakSpotEditingTool, "Weak Spot", "This tool manages the weak spots of the goop", EUserInterfaceActionType::ToggleButton, FInputChord());
+	ToolCommands.Add(WeakSpotEditingTool);
+
 	UI_COMMAND(SkeletonEditingTool, "Skeleton", "This tool manages the skeleton of the goop", EUserInterfaceActionType::ToggleButton, FInputChord());
 	ToolCommands.Add(SkeletonEditingTool);
 

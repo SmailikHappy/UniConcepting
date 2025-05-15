@@ -41,6 +41,37 @@ USlimeMoldSkeletonComponent* USlimeMoldEditorFuncLib::GetSkeletonComponentFromSe
 	return nullptr;
 }
 
+bool USlimeMoldEditorFuncLib::SingleActorWithWeakSpotComponentIsSelected()
+{
+	TArray<UObject*> SelectedObjects;
+	GEditor->GetSelectedActors()->GetSelectedObjects(SelectedObjects);
+	if (SelectedObjects.Num() != 1)
+	{
+		return false;
+	}
+	AActor* SelectedActor = Cast<AActor>(SelectedObjects[0]);
+	if (!SelectedActor)
+	{
+		return false;
+	}
+	if (SelectedActor->GetComponentByClass<USlimeMoldWeakSpotComponent>() == nullptr)
+	{
+		return false;
+	}
+	return true;
+}
+
+USlimeMoldWeakSpotComponent* USlimeMoldEditorFuncLib::GetWeakSpotComponentFromSelectedActor()
+{
+	if (SingleActorWithWeakSpotComponentIsSelected())
+	{
+		TArray<UObject*> SelectedObjects;
+		GEditor->GetSelectedActors()->GetSelectedObjects(SelectedObjects);
+		return Cast<AActor>(SelectedObjects[0])->GetComponentByClass<USlimeMoldWeakSpotComponent>();
+	}
+	return nullptr;
+}
+
 AActor* USlimeMoldEditorFuncLib::GetSingleSelectedActor()
 {
 	if (SingleActorWithSkeletonComponentIsSelected())

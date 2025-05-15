@@ -6,6 +6,7 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "Structs.h"
 #include "SlimeMoldSkeletonComponent.h"
+#include "SlimeMoldWeakSpotComponent.h"
 #include "InputState.h"
 #include "SlimeMoldEditorToolFunctionLibrary.generated.h"
 
@@ -23,6 +24,10 @@ public:
 
 	static bool SingleActorWithSkeletonComponentIsSelected();
 	static USlimeMoldSkeletonComponent* GetSkeletonComponentFromSelectedActor();
+	
+	static bool SingleActorWithWeakSpotComponentIsSelected();
+	static USlimeMoldWeakSpotComponent* GetWeakSpotComponentFromSelectedActor();
+
 	static AActor* GetSingleSelectedActor();
 	static void WarnUserDialog(const FString& Title, const FString& Message);
 

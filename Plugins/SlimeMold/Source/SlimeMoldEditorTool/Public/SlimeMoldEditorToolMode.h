@@ -22,6 +22,7 @@ class USlimeMoldEditorToolEditorMode : public UEdMode
 public:
 	const static FEditorModeID EM_SlimeMoldEditorToolEditorModeId;
 
+	static FString WeakSpotEditingToolName;
 	static FString SkeletonEditingToolName;
 	static FString MeshEditingToolName;
 
@@ -33,4 +34,5 @@ public:
 	virtual void ActorSelectionChangeNotify() override;
 	virtual void CreateToolkit() override;
 	virtual TMap<FName, TArray<TSharedPtr<FUICommandInfo>>> GetModeCommands() const override;
+	virtual void Exit() override;
 };
