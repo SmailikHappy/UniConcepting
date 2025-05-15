@@ -24,7 +24,7 @@ void FSlimeMoldWeakSpotEditingCustomization::CustomizeDetails(IDetailLayoutBuild
 	// Declare properties
 	TSharedRef<IPropertyHandle> ResetTransformBoolean = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(USlimeMoldWeakSpotEditingToolProperties, bResetTransformButton));
 
-	// Hide the boolean
+	// Hide the boolean that represents the button
 	DetailBuilder.HideProperty(ResetTransformBoolean);
 
 	SkeletonButtonsCategory.AddCustomRow(LOCTEXT("ResetTransaformButtonRow", "Reset transform button"))
